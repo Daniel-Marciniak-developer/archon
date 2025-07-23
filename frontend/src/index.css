@@ -1,0 +1,421 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@100;200;300;400;500;600;700;800;900&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* Crys tal i n Darkne ss Li ght Theme (fallback) */
+    --background: 240 10% 3.9%;
+    --foreground: 0 0% 98%;
+    --card: 240 10% 3.9%;
+    --card-foreground: 0 0% 98%;
+    --popover: 240 10% 3.9%;
+    --popover-foreground: 0 0% 98%;
+    --primary: 261 100% 62%;
+    --primary-foreground: 0 0% 98%;
+    --secondary: 240 3.7% 15.9%;
+    --secondary-foreground: 0 0% 98%;
+    --muted: 240 3.7% 15.9%;
+    --muted-foreground: 240 5% 64.9%;
+    --accent: 261 100% 62%;
+    --accent-foreground: 0 0% 98%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 240 5% 18%;
+    --input: 240 5% 18%;
+    --ring: 261 100% 62%;
+    --radius: 0.5rem;
+    --chart-1: 261 100% 62%;
+    --chart-2: 173 58% 39%;
+    --chart-3: 197 37% 24%;
+    --chart-4: 43 74% 66%;
+    --chart-5: 27 87% 67%;
+
+    /* Custom Crystal in  Dark ness Variables */
+    --crystal-void: 240 10% 5%; /* #0D0D0F */
+    --crystal-surface: 240 9% 9%; /* #17171A */
+    --crystal-border: 240 10% 18%; /* #2A2A2E */
+    --crystal-text-primary: 240 5% 94%; /* #F0F0F2 */
+    --crystal-text-secondary: 240 5% 53%; /* #848488 */
+    --crystal-electric: 261 100% 62%; /* #8A3FFC */
+    --crystal-critical: 0 85% 60%; /*  #FF4D4F */
+    --crystal-high: 36 100% 62%; /* #FFA940 */
+    --crystal-ok: 130 60% 50%; /* # 52C41A */
+  }
+
+  .dark {
+    /* Crys  t a l in   Darkne ss D ark  Theme (primary) */
+    --background: 240 10% 5%; /* Deep Void #0D0D0F */
+    --foreground: 240 5% 94%; /*  Pris tine Text #F0F0F2 */
+    --card: 240 9% 9%; /* U I Surface #17171A */
+    --card-foreground: 240 5% 94%;
+    --popover: 240 9% 9%;
+    --popover-foreground: 240 5% 94%;
+    --primary: 261 100% 62%; /* Electric Violet #8A3FFC */
+    --primary-foreground: 240 5% 94%;
+    --secondary: 240 9% 9%;
+    --secondary-foreground: 240 5% 94%;
+    --muted: 240 9% 9%;
+    --muted-foreground: 240 5% 53%; /* Muted Text #848488 */
+    --accent: 261 100% 62%;
+    --accent-foreground: 240 5% 94%;
+    --destructive: 0 85% 60%; /* Critical Red #FF4D4F */
+    --destructive-foreground: 240 5% 94%;
+    --border: 240 10% 18%; /* Subtle Line #2A2A2E */
+    --input: 240 10% 18%;
+    --ring: 261 100% 62%;
+    --chart-1: 261 100% 62%;
+    --chart-2: 160 60% 45%;
+    --chart-3: 30 80% 55%;
+    --chart-4: 280 65% 60%;
+    --chart-5: 340 75% 55%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  
+  body {
+    @apply bg-background text-foreground;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    font-feature-settings: "rlig" 1, "calt" 1;
+    background-color: hsl(var(--crystal-void));
+    color: hsl(var(--crystal-text-primary));
+  }
+
+  /* Custom Crystal Classes */
+  .crystal-surface {
+    background-color: hsl(var(--crystal-surface));
+    border: 1px solid hsl(var(--crystal-border));
+  }
+
+  .crystal-glass {
+    background: hsl(var(--crystal-surface) / 0.8);
+    backdrop-filter: blur(12px);
+    border: 1px solid hsl(var(--crystal-border) / 0.5);
+  }
+
+  .crystal-electric {
+    color: hsl(var(--crystal-electric));
+  }
+
+  .crystal-glow {
+    box-shadow: 0 0 20px hsl(var(--crystal-electric) / 0.3);
+  }
+
+  .crystal-btn-primary {
+    background: hsl(var(--crystal-electric));
+    color: hsl(var(--crystal-text-primary));
+    transition: all 0.2s ease;
+  }
+
+  .crystal-btn-primary:hover {
+    background: hsl(var(--crystal-electric) / 0.9);
+    box-shadow: 0 0 20px hsl(var(--crystal-electric) / 0.4);
+    transform: translateY(-1px);
+  }
+
+  .crystal-btn-secondary {
+    background: hsl(var(--crystal-surface));
+    color: hsl(var(--crystal-text-primary));
+    border: 1px solid hsl(var(--crystal-border));
+    transition: all 0.2s ease;
+  }
+
+  .crystal-btn-secondary:hover {
+    background: hsl(var(--crystal-border));
+    border-color: hsl(var(--crystal-electric) / 0.5);
+    transform: translateY(-1px);
+  }
+
+  .crystal-btn-danger {
+    background: hsl(var(--crystal-critical));
+    color: hsl(var(--crystal-text-primary));
+    transition: all 0.2s ease;
+  }
+
+  .crystal-btn-danger:hover {
+    background: hsl(var(--crystal-critical) / 0.9);
+    box-shadow: 0 0 20px hsl(var(--crystal-critical) / 0.4);
+    transform: translateY(-1px);
+  }
+
+  /* Text Colors */
+  .crystal-text-primary {
+    color: hsl(var(--crystal-text-primary));
+  }
+
+  .crystal-text-secondary {
+    color: hsl(var(--crystal-text-secondary));
+  }
+
+  .crystal-text-electric {
+    color: hsl(var(--crystal-electric));
+  }
+
+  .crystal-text-critical {
+    color: hsl(var(--crystal-critical));
+  }
+
+  .crystal-text-warning {
+    color: hsl(var(--crystal-high));
+  }
+
+  .crystal-text-success {
+    color: hsl(var(--crystal-ok));
+  }
+
+  /* Background Colors */
+  .crystal-bg-electric {
+    background-color: hsl(var(--crystal-electric));
+  }
+
+  .crystal-bg-critical {
+    background-color: hsl(var(--crystal-critical));
+  }
+
+  .crystal-bg-warning {
+    background-color: hsl(var(--crystal-high));
+  }
+
+  .crystal-bg-success {
+    background-color: hsl(var(--crystal-ok));
+  }
+
+  /* Border Colors */
+  .crystal-border-electric {
+    border-color: hsl(var(--crystal-electric));
+  }
+
+  .crystal-border-critical {
+    border-color: hsl(var(--crystal-critical));
+  }
+
+  .crystal-border-warning {
+    border-color: hsl(var(--crystal-high));
+  }
+
+  .crystal-border-success {
+    border-color: hsl(var(--crystal-ok));
+  }
+
+  /* Upload Zone Styles */
+  .crystal-upload-zone {
+    background: hsl(var(--crystal-surface) / 0.3);
+    border: 2px dashed hsl(var(--crystal-border));
+    transition: all 0.3s ease;
+  }
+
+  .crystal-upload-zone:hover {
+    border-color: hsl(var(--crystal-electric) / 0.5);
+    background: hsl(var(--crystal-electric) / 0.05);
+  }
+
+  .crystal-upload-zone.drag-over {
+    border-color: hsl(var(--crystal-electric));
+    background: hsl(var(--crystal-electric) / 0.1);
+    box-shadow: 0 0 20px hsl(var(--crystal-electric) / 0.2);
+  }
+
+  /* Progress Bar */
+  .crystal-progress {
+    background: hsl(var(--crystal-surface));
+    border-radius: 0.5rem;
+    overflow: hidden;
+  }
+
+  .crystal-progress-bar {
+    background: linear-gradient(90deg,
+      hsl(var(--crystal-electric)),
+      hsl(var(--crystal-electric) / 0.8)
+    );
+    transition: width 0.3s ease;
+    height: 100%;
+  }
+
+  /* Loading Animation */
+  .crystal-loading {
+    animation: crystal-pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  }
+
+  @keyframes crystal-pulse {
+    0%, 100% {
+      opacity: 1;
+    }
+    50% {
+      opacity: 0.5;
+    }
+  }
+
+  .crystal-spinner {
+    border: 2px solid hsl(var(--crystal-border));
+    border-top: 2px solid hsl(var(--crystal-electric));
+    border-radius: 50%;
+    animation: crystal-spin 1s linear infinite;
+  }
+
+  @keyframes crystal-spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+  }
+
+  /* Card Enhancements */
+  .crystal-card {
+    background: hsl(var(--crystal-surface) / 0.8);
+    backdrop-filter: blur(12px);
+    border: 1px solid hsl(var(--crystal-border));
+    border-radius: 0.75rem;
+    transition: all 0.2s ease;
+  }
+
+  .crystal-card:hover {
+    border-color: hsl(var(--crystal-electric) / 0.3);
+    box-shadow: 0 4px 20px hsl(var(--crystal-electric) / 0.1);
+    transform: translateY(-2px);
+  }
+
+  /* Badge Styles */
+  .crystal-badge-electric {
+    background: hsl(var(--crystal-electric) / 0.1);
+    color: hsl(var(--crystal-electric));
+    border: 1px solid hsl(var(--crystal-electric) / 0.3);
+  }
+
+  .crystal-badge-success {
+    background: hsl(var(--crystal-ok) / 0.1);
+    color: hsl(var(--crystal-ok));
+    border: 1px solid hsl(var(--crystal-ok) / 0.3);
+  }
+
+  .crystal-badge-warning {
+    background: hsl(var(--crystal-high) / 0.1);
+    color: hsl(var(--crystal-high));
+    border: 1px solid hsl(var(--crystal-high) / 0.3);
+  }
+
+  .crystal-badge-critical {
+    background: hsl(var(--crystal-critical) / 0.1);
+    color: hsl(var(--crystal-critical));
+    border: 1px solid hsl(var(--crystal-critical) / 0.3);
+  }
+
+  /* Tab Enhancements */
+  .crystal-tabs {
+    background: hsl(var(--crystal-surface) / 0.5);
+    border-radius: 0.5rem;
+    padding: 0.25rem;
+  }
+
+  .crystal-tab {
+    transition: all 0.2s ease;
+    border-radius: 0.375rem;
+  }
+
+  .crystal-tab[data-state="active"] {
+    background: hsl(var(--crystal-electric));
+    color: hsl(var(--crystal-text-primary));
+    box-shadow: 0 2px 8px hsl(var(--crystal-electric) / 0.3);
+  }
+
+  .crystal-tab:not([data-state="active"]):hover {
+    background: hsl(var(--crystal-border) / 0.5);
+  }
+
+  /* Input Enhancements */
+  .crystal-input {
+    background: hsl(var(--crystal-surface));
+    border: 1px solid hsl(var(--crystal-border));
+    color: hsl(var(--crystal-text-primary));
+    transition: all 0.2s ease;
+  }
+
+  .crystal-input:focus {
+    border-color: hsl(var(--crystal-electric));
+    box-shadow: 0 0 0 2px hsl(var(--crystal-electric) / 0.2);
+  }
+
+  .crystal-input::placeholder {
+    color: hsl(var(--crystal-text-secondary));
+  }
+
+  /* Responsive Design Helpers */
+  @media (max-width: 768px) {
+    .crystal-mobile-stack {
+      flex-direction: column;
+    }
+
+    .crystal-mobile-full {
+      width: 100%;
+    }
+
+    .crystal-mobile-text-sm {
+      font-size: 0.875rem;
+    }
+  }
+
+  /* Accessibility Enhancements */
+  .crystal-scrollbar {
+    scrollbar-width: thin;
+    scrollbar-color: hsl(var(--crystal-electric) / 0.5) hsl(var(--crystal-surface));
+  }
+
+  .crystal-scrollbar::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+
+  .crystal-scrollbar::-webkit-scrollbar-track {
+    background: hsl(var(--crystal-surface));
+    border-radius: 4px;
+  }
+
+  .crystal-scrollbar::-webkit-scrollbar-thumb {
+    background: hsl(var(--crystal-electric) / 0.5);
+    border-radius: 4px;
+    transition: background 0.2s ease;
+  }
+
+  .crystal-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: hsl(var(--crystal-electric) / 0.7);
+  }
+
+  /* Focus styles for better accessibility */
+  .crystal-focus-visible:focus-visible {
+    outline: 2px solid hsl(var(--crystal-electric));
+    outline-offset: 2px;
+    border-radius: 0.25rem;
+  }
+
+  /* High contrast mode support */
+  @media (prefers-contrast: high) {
+    .crystal-glass {
+      background: hsl(var(--crystal-surface));
+      backdrop-filter: none;
+    }
+
+    .crystal-text-secondary {
+      color: hsl(var(--crystal-text-primary));
+    }
+  }
+
+  /* Reduced motion support */
+  @media (prefers-reduced-motion: reduce) {
+    .crystal-card,
+    .crystal-btn-primary,
+    .crystal-btn-secondary,
+    .crystal-progress-bar {
+      transition: none;
+    }
+
+    .crystal-loading {
+      animation: none;
+    }
+  }
+}
+
+
+
