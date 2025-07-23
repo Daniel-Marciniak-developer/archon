@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # Archon - Code Analysis Platform
 
 This project consists of a FastAPI backend server and a React + TypeScript frontend application for analyzing GitHub repositories.
@@ -77,3 +78,7 @@ For code analysis to work, start Celery worker:
 cd backend
 celery -A app.libs.celery_worker worker --loglevel=info
 ```
+=======
+# Archon
+ Archon code analysis and refactoring system based on the recommended solutions.
+>>>>>>> 9585ba3f3f631e579646657f1e9a41ee74af3582
