@@ -26,9 +26,9 @@ export const CodeViewer: React.FC<CodeViewerProps> = React.memo(({
     
     const languageMap: Record<string, string> = {
       'js': 'javascript',
-      'jsx': 'jsx',
+      'jsx': 'javascript',
       'ts': 'typescript',
-      'tsx': 'tsx',
+      'tsx': 'typescript',
       'py': 'python',
       'java': 'java',
       'cpp': 'cpp',
