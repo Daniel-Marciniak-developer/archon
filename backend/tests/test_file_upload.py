@@ -45,10 +45,10 @@ class TestFileValidation:
             "malware.dll",
             "../../../etc/passwd",
             "file\x00name.py",
-            "con.py",  # Windows reserved name
+            "con.py",
             "script.bat",
-            "x" * 300 + ".py",  # Too long
-            "file<script>.py",  # Invalid characters
+            "x" * 300 + ".py",
+            "file<script>.py",
         ]
         
         for filename in invalid_filenames:
@@ -88,14 +88,12 @@ class TestFileValidation:
     
     def test_validate_file_size(self):
         """Test file size validation."""
-        # Valid sizes
-        assert validate_file_size(1024)  # 1KB
-        assert validate_file_size(10 * 1024 * 1024)  # 10MB
-        assert validate_file_size(50 * 1024 * 1024)  # 50MB (at limit)
+        assert validate_file_size(1024)
+        assert validate_file_size(10 * 1024 * 1024)
+        assert validate_file_size(50 * 1024 * 1024)
         
-        # Invalid sizes
-        assert not validate_file_size(60 * 1024 * 1024)  # 60MB (over limit)
-        assert not validate_file_size(100 * 1024 * 1024)  # 100MB (way over)
+        assert not validate_file_size(60 * 1024 * 1024)
+        assert not validate_file_size(100 * 1024 * 1024)
     
     def test_validate_file_content_security_safe(self):
         """Test content security validation with safe content."""
@@ -134,7 +132,7 @@ class TestFileValidation:
             ("file...name.py", "file.name.py"),
             ("  .hidden  ", "hidden"),
             ("", "unnamed_file"),
-            ("con.py", "con.py"),  # Should be handled by security validation
+            ("con.py", "con.py"),
         ]
         
         for input_name, expected in test_cases:
@@ -146,7 +144,6 @@ class TestProjectAnalysis:
     
     def test_analyze_python_project_valid(self):
         """Test analysis of valid Python projects."""
-        # Simple Python project
         files_metadata = [
             {"filename": "main.py", "size": 1024},
             {"filename": "__init__.py", "size": 50},
@@ -167,7 +164,7 @@ class TestProjectAnalysis:
         """Test analysis of Python projects with frameworks."""
         files_metadata = [
             {"filename": "main.py", "size": 1024},
-            {"filename": "manage.py", "size": 800},  # Django indicator
+            {"filename": "manage.py", "size": 800},
             {"filename": "requirements.txt", "size": 200},
             {"filename": "models.py", "size": 1500}
         ]
@@ -196,7 +193,7 @@ class TestProjectAnalysis:
     def test_analyze_python_project_too_large(self):
         """Test analysis of projects that are too large."""
         files_metadata = [
-            {"filename": "main.py", "size": 250 * 1024 * 1024},  # 250MB
+            {"filename": "main.py", "size": 250 * 1024 * 1024},
         ]
         
         result = analyze_python_project_simple(files_metadata)
@@ -239,7 +236,7 @@ class TestGitHubValidation:
         
         result = validate_github_repository(repo_data)
         
-        assert result["confidence_score"] < 0.5  # Lower confidence for non-Python
+        assert result["confidence_score"] < 0.5
         assert any("JavaScript" in warning for warning in result["warnings"])
     
     def test_validate_github_repository_old(self):
@@ -249,7 +246,7 @@ class TestGitHubValidation:
             "language": "Python",
             "description": "An old Python tool",
             "stargazers_count": 5,
-            "updated_at": "2020-01-15T10:30:00Z",  # Very old
+            "updated_at": "2020-01-15T10:30:00Z",
             "fork": False,
             "private": False
         }
@@ -278,7 +275,6 @@ class TestSecurityValidation:
     
     def test_binary_content_detection(self):
         """Test detection of suspicious binary content."""
-        # Create content with many null bytes (suspicious)
         binary_content = b"print('hello')" + b"\x00" * 1000
         
         is_valid, error = validate_file_content_security(binary_content, "test.py")
@@ -293,7 +289,6 @@ class TestSecurityValidation:
         assert not is_valid
         assert "empty" in error.lower()
         
-        # But __init__.py can be empty
         is_valid, error = validate_file_content_security(empty_content, "__init__.py")
         assert is_valid
 
@@ -303,18 +298,14 @@ class TestFileUploadIntegration:
     
     def test_upload_valid_python_project(self, client: TestClient, sample_python_files):
         """Test uploading a valid Python project."""
-        # This would require mocking the authentication and database
-        # For now, we'll test the validation logic
         pass
     
     def test_upload_malicious_files(self, client: TestClient, sample_malicious_files):
         """Test uploading malicious files (should be rejected)."""
-        # This would test the security validation in the upload endpoint
         pass
     
     def test_upload_oversized_files(self, client: TestClient, large_files):
         """Test uploading files that exceed size limits."""
-        # This would test the size validation in the upload endpoint
         pass
 
 if __name__ == "__main__":

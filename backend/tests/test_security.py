@@ -17,7 +17,6 @@ class TestSecurityHeaders:
         """Test that security headers are present in responses."""
         response = client.get("/health")
         
-        # Check for essential security headers
         assert "X-Content-Type-Options" in response.headers
         assert response.headers["X-Content-Type-Options"] == "nosniff"
         
@@ -35,7 +34,6 @@ class TestSecurityHeaders:
     
     def test_hsts_header_https(self):
         """Test HSTS header is added for HTTPS requests."""
-        # This would require testing with HTTPS
         pass
 
 class TestRateLimiting:
@@ -43,7 +41,6 @@ class TestRateLimiting:
     
     def test_rate_limiting_normal_requests(self, client: TestClient):
         """Test that normal request rates are allowed."""
-        # Make several requests within normal limits
         for i in range(10):
             response = client.get("/health")
             assert response.status_code != 429, f"Request {i} was rate limited"
@@ -51,14 +48,10 @@ class TestRateLimiting:
     @pytest.mark.slow
     def test_rate_limiting_excessive_requests(self, client: TestClient):
         """Test that excessive requests are rate limited."""
-        # This test would need to be carefully designed to avoid
-        # affecting other tests and to work with the actual rate limits
         pass
     
     def test_rate_limiting_different_endpoints(self, client: TestClient):
         """Test that different endpoints have different rate limits."""
-        # Upload endpoints should have stricter limits
-        # This would require mocking the upload endpoint
         pass
 
 class TestInputValidation:
@@ -74,7 +67,6 @@ class TestInputValidation:
         
         for path in malicious_paths:
             response = client.get(path)
-            # Should either be 400 (bad request) or 404 (not found), not 200
             assert response.status_code in [400, 404], f"Directory traversal not blocked: {path}"
     
     def test_malicious_user_agent_blocking(self, client: TestClient):
@@ -104,8 +96,7 @@ class TestInputValidation:
     
     def test_oversized_request_blocking(self, client: TestClient):
         """Test blocking of oversized requests."""
-        # Create a large payload
-        large_data = "x" * (300 * 1024 * 1024)  # 300MB
+        large_data = "x" * (300 * 1024 * 1024)
         
         response = client.post(
             "/api/projects/upload",
@@ -156,9 +147,9 @@ class TestFileUploadSecurity:
         malicious_filenames = [
             "../../../etc/passwd",
             "file\x00name.py",
-            "con.py",  # Windows reserved name
+            "con.py",
             "file<script>alert('xss')</script>.py",
-            "x" * 300 + ".py",  # Too long
+            "x" * 300 + ".py",
         ]
         
         for filename in malicious_filenames:
@@ -169,8 +160,7 @@ class TestFileUploadSecurity:
     
     def test_file_size_limits(self, client: TestClient):
         """Test file size limit enforcement."""
-        # Create a file that's too large
-        large_content = b"x" * (60 * 1024 * 1024)  # 60MB
+        large_content = b"x" * (60 * 1024 * 1024)
         
         files = {"files": ("large.py", large_content, "text/plain")}
         response = client.post("/api/projects/upload", files=files)
@@ -180,10 +170,9 @@ class TestFileUploadSecurity:
     
     def test_total_upload_size_limit(self, client: TestClient):
         """Test total upload size limit enforcement."""
-        # Create multiple files that together exceed the limit
         files = []
         for i in range(10):
-            content = b"x" * (30 * 1024 * 1024)  # 30MB each
+            content = b"x" * (30 * 1024 * 1024)
             files.append(("files", (f"file{i}.py", content, "text/plain")))
         
         response = client.post("/api/projects/upload", files=files)
@@ -227,10 +216,8 @@ class TestSecurityLogging:
     def test_security_events_logged(self, client: TestClient):
         """Test that security events are properly logged."""
         with patch('builtins.print') as mock_print:
-            # Trigger a security event (malicious user agent)
             client.get("/health", headers={"User-Agent": "sqlmap/1.0"})
             
-            # Check that security event was logged
             logged_calls = [str(call) for call in mock_print.call_args_list]
             security_logs = [log for log in logged_calls if "SECURITY" in log]
             assert len(security_logs) > 0, "Security event not logged"
@@ -238,18 +225,14 @@ class TestSecurityLogging:
     def test_upload_attempts_logged(self, client: TestClient):
         """Test that file upload attempts are logged."""
         with patch('builtins.print') as mock_print:
-            # Attempt file upload
             files = {"files": ("test.py", b"print('hello')", "text/plain")}
             client.post("/api/projects/upload", files=files)
             
-            # Check that upload attempt was logged
             logged_calls = [str(call) for call in mock_print.call_args_list]
             upload_logs = [log for log in logged_calls if "UPLOAD" in log]
-            # Note: This might not trigger if authentication fails first
     
     def test_rate_limit_violations_logged(self, client: TestClient):
         """Test that rate limit violations are logged."""
-        # This would require triggering actual rate limits
         pass
 
 class TestSecurityConfiguration:
@@ -258,12 +241,10 @@ class TestSecurityConfiguration:
     def test_production_security_settings(self):
         """Test that production security settings are properly configured."""
         with patch.dict('os.environ', {'APP_ENV': 'production'}):
-            # Import security config with production settings
             from security_config import SecurityConfig
             
-            # Verify stricter limits in production
-            assert SecurityConfig.MAX_FILE_SIZE <= 50 * 1024 * 1024  # 50MB or less
-            assert SecurityConfig.MAX_TOTAL_SIZE <= 200 * 1024 * 1024  # 200MB or less
+            assert SecurityConfig.MAX_FILE_SIZE <= 50 * 1024 * 1024
+            assert SecurityConfig.MAX_TOTAL_SIZE <= 200 * 1024 * 1024
             assert SecurityConfig.UPLOAD_RATE_LIMIT == "3/minute"
     
     def test_development_security_settings(self):
@@ -271,7 +252,6 @@ class TestSecurityConfiguration:
         with patch.dict('os.environ', {'APP_ENV': 'development'}):
             from security_config import SecurityConfig
             
-            # Verify more permissive limits in development
             assert SecurityConfig.MAX_FILE_SIZE >= 50 * 1024 * 1024
             assert SecurityConfig.MAX_TOTAL_SIZE >= 200 * 1024 * 1024
 
@@ -313,9 +293,7 @@ class TestPenetrationTestingScenarios:
         ]
         
         for payload in sql_payloads:
-            # Test in various parameters
             response = client.get(f"/api/projects/projects?search={payload}")
-            # Should not cause internal server error (500)
             assert response.status_code != 500, f"SQL injection may have succeeded: {payload}"
     
     def test_xss_prevention(self, client: TestClient):
@@ -331,13 +309,11 @@ class TestPenetrationTestingScenarios:
             files = {"files": ("test.py", payload.encode(), "text/plain")}
             response = client.post("/api/projects/upload", files=files)
             
-            # Response should not contain unescaped payload
             if response.status_code == 200:
                 assert payload not in response.text, f"XSS payload not escaped: {payload}"
     
     def test_csrf_protection(self, client: TestClient):
         """Test CSRF protection mechanisms."""
-        # Test that state-changing operations require proper authentication
         response = client.post("/api/projects/projects", json={
             "repo_name": "test",
             "repo_owner": "test",

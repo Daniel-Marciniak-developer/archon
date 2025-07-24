@@ -17,7 +17,6 @@ class TestGitHubAPIIntegration:
     @patch('app.apis.github_auth.requests.get')
     def test_github_repositories_success(self, mock_get, mock_user):
         """Test successful GitHub repository fetching."""
-        # Mock successful GitHub API response
         mock_response = MagicMock()
         mock_response.status_code = 200
         mock_response.ok = True
@@ -37,12 +36,9 @@ class TestGitHubAPIIntegration:
         ]
         mock_get.return_value = mock_response
         
-        # Mock environment variable for GitHub token
         with patch.dict('os.environ', {'GITHUB_ACCESS_TOKEN': 'fake_token'}):
-            # Create mock request
             mock_request = MagicMock()
             
-            # Test the function
             result = asyncio.run(get_github_repositories(mock_request, mock_user))
             
             assert "repositories" in result
@@ -53,7 +49,6 @@ class TestGitHubAPIIntegration:
     @patch('app.apis.github_auth.requests.get')
     def test_github_repositories_unauthorized(self, mock_get, mock_user):
         """Test GitHub API with unauthorized access."""
-        # Mock unauthorized response
         mock_response = MagicMock()
         mock_response.status_code = 401
         mock_response.ok = False
@@ -71,7 +66,6 @@ class TestGitHubAPIIntegration:
     @patch('app.apis.github_auth.requests.get')
     def test_github_repositories_rate_limit(self, mock_get, mock_user):
         """Test GitHub API rate limit handling."""
-        # Mock rate limit response
         mock_response = MagicMock()
         mock_response.status_code = 403
         mock_response.ok = False
@@ -95,7 +89,6 @@ class TestGitHubAPIIntegration:
             
             assert "repositories" in result
             assert len(result["repositories"]) > 0
-            # Check that mock data contains Python repositories
             python_repos = [r for r in result["repositories"] if r["language"] == "Python"]
             assert len(python_repos) > 0
 
@@ -147,15 +140,14 @@ class TestGitHubRepositoryValidation:
             "language": "Python",
             "description": "An old Python project",
             "stargazers_count": 5,
-            "updated_at": "2020-01-15T10:30:00Z",  # Very old
+            "updated_at": "2020-01-15T10:30:00Z",
             "fork": False,
             "private": False
         }
         
         result = validate_github_repository(repo_data)
         
-        # Should still be suitable but with warnings
-        assert result["is_suitable"]  # Python language gives it enough confidence
+        assert result["is_suitable"]
         assert any("updated" in warning.lower() for warning in result["warnings"])
     
     def test_validate_forked_repository(self):
@@ -166,7 +158,7 @@ class TestGitHubRepositoryValidation:
             "description": "A forked Python tool",
             "stargazers_count": 100,
             "updated_at": "2024-01-15T10:30:00Z",
-            "fork": True,  # This is a fork
+            "fork": True,
             "private": False
         }
         
@@ -182,7 +174,7 @@ class TestGitHubRepositoryValidation:
             "name": "private-python-tool",
             "language": "Python",
             "description": "A private Python tool",
-            "stargazers_count": 0,  # Private repos often have 0 stars
+            "stargazers_count": 0,
             "updated_at": "2024-01-15T10:30:00Z",
             "fork": False,
             "private": True
@@ -199,7 +191,7 @@ class TestGitHubRepositoryValidation:
         repo_data = {
             "name": "no-desc-repo",
             "language": "Python",
-            "description": "",  # No description
+            "description": "",
             "stargazers_count": 10,
             "updated_at": "2024-01-15T10:30:00Z",
             "fork": False,
@@ -227,7 +219,7 @@ class TestGitHubRepositoryValidation:
         result = validate_github_repository(repo_data)
         
         assert result["is_suitable"]
-        assert result["confidence_score"] > 0.8  # High confidence due to Python keywords
+        assert result["confidence_score"] > 0.8
 
 class TestGitHubAPIErrorHandling:
     """Test error handling in GitHub API integration."""
@@ -235,7 +227,6 @@ class TestGitHubAPIErrorHandling:
     @patch('app.apis.github_auth.requests.get')
     def test_github_api_network_error(self, mock_get, mock_user):
         """Test handling of network errors."""
-        # Mock network error
         mock_get.side_effect = Exception("Network error")
         
         with patch.dict('os.environ', {'GITHUB_ACCESS_TOKEN': 'valid_token'}):
@@ -249,7 +240,6 @@ class TestGitHubAPIErrorHandling:
     @patch('app.apis.github_auth.requests.get')
     def test_github_api_invalid_json(self, mock_get, mock_user):
         """Test handling of invalid JSON response."""
-        # Mock response with invalid JSON
         mock_response = MagicMock()
         mock_response.status_code = 200
         mock_response.ok = True
@@ -281,7 +271,6 @@ class TestGitHubDataTransformation:
     @patch('app.apis.github_auth.requests.get')
     def test_repository_data_transformation(self, mock_get, mock_user):
         """Test that GitHub API data is correctly transformed."""
-        # Mock GitHub API response
         github_repo = {
             "id": 123456,
             "name": "test-repository",
@@ -307,7 +296,6 @@ class TestGitHubDataTransformation:
             
             repo = result["repositories"][0]
             
-            # Verify all required fields are present and correctly transformed
             assert repo["id"] == 123456
             assert repo["name"] == "test-repository"
             assert repo["full_name"] == "testuser/test-repository"
@@ -325,13 +313,10 @@ class TestGitHubIntegrationEndpoints:
     
     def test_github_repositories_endpoint(self, client: TestClient):
         """Test the GitHub repositories endpoint."""
-        # This would require mocking authentication
-        # For now, we'll test the endpoint structure
         pass
     
     def test_validate_github_repo_endpoint(self, client: TestClient):
         """Test the GitHub repository validation endpoint."""
-        # This would test the validation endpoint
         pass
 
 if __name__ == "__main__":
