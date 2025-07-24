@@ -21,30 +21,27 @@ import asyncpg
 from app.auth import AuthorizedUser
 from app.apis.projects import get_db_connection, convert_user_id_to_int
 
-# Rate limiting decorator (simplified for now)
 def rate_limit(limit_string):
     """Decorator that applies rate limiting if available, otherwise does nothing"""
     def decorator(func):
-        # For now, just return the function without rate limiting
         # TODO: Implement proper rate limiting when slowapi is available
         return func
     return decorator
 
 router = APIRouter(prefix="/api/projects", tags=["File Upload"])
 
-# Configuration
-MAX_FILE_SIZE = 100 * 1024 * 1024  # 100MB
-MAX_TOTAL_SIZE = 500 * 1024 * 1024  # 500MB
+MAX_FILE_SIZE = 100 * 1024 * 1024
+MAX_TOTAL_SIZE = 500 * 1024 * 1024
 ALLOWED_EXTENSIONS = {
-    '.py', '.pyx', '.pyi', '.pyw',  # Python files
-    '.txt', '.md', '.rst', '.doc',  # Documentation
-    '.json', '.yaml', '.yml', '.toml', '.cfg', '.ini',  # Config files
-    '.requirements', '.lock',  # Dependency files
-    '.gitignore', '.gitattributes',  # Git files
-    '.dockerfile', '.dockerignore',  # Docker files
-    '.sh', '.bat', '.ps1',  # Scripts
-    '.sql',  # Database files
-    '.env', '.env.example',  # Environment files
+    '.py', '.pyx', '.pyi', '.pyw',
+    '.txt', '.md', '.rst', '.doc',
+    '.json', '.yaml', '.yml', '.toml', '.cfg', '.ini',
+    '.requirements', '.lock',
+    '.gitignore', '.gitattributes',
+    '.dockerfile', '.dockerignore',
+    '.sh', '.bat', '.ps1',
+    '.sql',
+    '.env', '.env.example',
 }
 
 PYTHON_PROJECT_INDICATORS = {
@@ -95,11 +92,9 @@ def analyze_python_project(temp_dir: Path) -> ProjectValidationResult:
     files = list(temp_dir.rglob("*"))
     python_files = [f for f in files if f.suffix.lower() in {'.py', '.pyx', '.pyi'}]
     
-    # Check for Python project indicators
     project_files = [f.name.lower() for f in files]
     indicators_found = PYTHON_PROJECT_INDICATORS.intersection(set(project_files))
     
-    # Calculate confidence score
     confidence = 0.0
     detected_frameworks = []
     entry_points = []
@@ -107,7 +102,6 @@ def analyze_python_project(temp_dir: Path) -> ProjectValidationResult:
     warnings = []
     errors = []
     
-    # Basic checks
     if python_files:
         confidence += 0.4
     if indicators_found:
@@ -116,48 +110,40 @@ def analyze_python_project(temp_dir: Path) -> ProjectValidationResult:
         confidence += 0.2
         detected_frameworks.append('Python Package')
     
-    # Framework detection
     for file in files:
         if file.is_file():
             try:
                 content = file.read_text(encoding='utf-8', errors='ignore').lower()
                 
-                # Django detection
                 if 'django' in content or 'manage.py' in project_files:
                     detected_frameworks.append('Django')
                     confidence += 0.1
                 
-                # Flask detection
                 if 'flask' in content:
                     detected_frameworks.append('Flask')
                     confidence += 0.1
                 
-                # FastAPI detection
                 if 'fastapi' in content:
                     detected_frameworks.append('FastAPI')
                     confidence += 0.1
                 
-                # Entry point detection
                 if 'if __name__ == "__main__"' in content:
                     entry_points.append(str(file.relative_to(temp_dir)))
                     
             except Exception:
                 continue
     
-    # Dependency analysis
     for indicator in ['requirements.txt', 'pyproject.toml', 'Pipfile']:
         dep_file = temp_dir / indicator
         if dep_file.exists():
             try:
                 content = dep_file.read_text(encoding='utf-8')
-                # Extract some common dependencies
                 common_deps = ['django', 'flask', 'fastapi', 'numpy', 'pandas', 'requests']
                 found_deps = [dep for dep in common_deps if dep in content.lower()]
                 dependencies.extend(found_deps)
             except Exception:
                 warnings.append(f"Could not read {indicator}")
     
-    # Validation checks
     if not python_files and not indicators_found:
         errors.append("No Python files or project indicators found")
         confidence = 0.0
@@ -198,14 +184,12 @@ async def save_uploaded_files(files: List[UploadFile], temp_dir: Path) -> Dict[s
         if not file.filename:
             continue
             
-        # Validate file
         if not validate_file_extension(file.filename):
             raise HTTPException(
                 status_code=400, 
                 detail=f"File type not allowed: {file.filename}"
             )
         
-        # Read file content
         content = await file.read()
         file_size = len(content)
         
@@ -223,17 +207,15 @@ async def save_uploaded_files(files: List[UploadFile], temp_dir: Path) -> Dict[s
                 detail=f"Total upload size too large ({total_size / 1024 / 1024:.1f}MB > {MAX_TOTAL_SIZE / 1024 / 1024}MB)"
             )
         
-        # Save file
         file_path = temp_dir / file.filename
         file_path.parent.mkdir(parents=True, exist_ok=True)
         
         with open(file_path, 'wb') as f:
             f.write(content)
         
-        # Calculate hash for deduplication
         file_hash = hashlib.sha256(content).hexdigest()
         if file_hash in file_hashes:
-            continue  # Skip duplicate files
+            continue
         file_hashes.add(file_hash)
         
         saved_files.append({
@@ -244,7 +226,6 @@ async def save_uploaded_files(files: List[UploadFile], temp_dir: Path) -> Dict[s
             'mime_type': mimetypes.guess_type(file.filename)[0]
         })
         
-        # Reset file position for potential re-reading
         await file.seek(0)
     
     return {
@@ -272,15 +253,12 @@ async def upload_project_files(
     print(f"📁 API: Received {len(files)} files")
     
     try:
-        # Create temporary directory
         temp_dir = Path(tempfile.mkdtemp(prefix="archon_upload_"))
         print(f"📂 API: Created temp directory: {temp_dir}")
         
-        # Save and validate files
         file_metadata = await save_uploaded_files(files, temp_dir)
         print(f"💾 API: Saved {file_metadata['file_count']} files ({file_metadata['total_size'] / 1024 / 1024:.1f}MB)")
         
-        # Analyze project
         validation_result = analyze_python_project(temp_dir)
         print(f"🔍 API: Project analysis - Python: {validation_result.is_python_project}, Confidence: {validation_result.confidence_score:.2f}")
         
@@ -296,14 +274,11 @@ async def upload_project_files(
                 detail=f"Project validation failed: {', '.join(validation_result.errors)}"
             )
         
-        # Generate project name if not provided
         if not project_name:
             project_name = f"uploaded-project-{int(time.time())}"
         
-        # Create project in database
         conn = await get_db_connection()
         try:
-            # Check for duplicate project name
             existing = await conn.fetchrow(
                 "SELECT id FROM projects WHERE user_id = $1 AND repo_name = $2",
                 db_user_id, project_name
@@ -315,7 +290,6 @@ async def upload_project_files(
                     detail=f"Project '{project_name}' already exists"
                 )
             
-            # Insert new project
             project_id = await conn.fetchval(
                 """
                 INSERT INTO projects (user_id, repo_name, repo_owner, repo_url, created_at)
@@ -324,8 +298,8 @@ async def upload_project_files(
                 """,
                 db_user_id,
                 project_name,
-                user.email or "uploaded",  # Use email as owner for uploaded projects
-                f"upload://{project_name}"  # Special URL format for uploaded projects
+                user.email or "uploaded",
+                f"upload://{project_name}"
             )
             
             print(f"✅ API: Created project with ID {project_id}")
@@ -334,9 +308,6 @@ async def upload_project_files(
             await conn.close()
         
         # TODO: In a real implementation, you would:
-        # 1. Store files in persistent storage (S3, local filesystem, etc.)
-        # 2. Create analysis tasks for the uploaded project
-        # 3. Handle file metadata in database
         
         total_time = (time.time() - operation_start) * 1000
         print(f"🎉 API: Upload completed successfully in {total_time:.2f}ms")
@@ -351,13 +322,11 @@ async def upload_project_files(
         )
         
     except HTTPException:
-        # Re-raise HTTP exceptions as-is
         raise
     except Exception as e:
         print(f"❌ API: Upload error: {str(e)}")
         raise HTTPException(status_code=500, detail="Upload processing failed")
     finally:
-        # Cleanup temporary directory
         if temp_dir and temp_dir.exists():
             try:
                 shutil.rmtree(temp_dir)

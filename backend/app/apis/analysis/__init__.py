@@ -7,10 +7,8 @@ import asyncio
 import traceback
 from app.auth import AuthorizedUser
 
-# Router for endpoints
 router = APIRouter()
 
-# Database connection helper
 async def get_db_connection():
     """Get database connection with logging"""
     try:
@@ -32,14 +30,12 @@ async def get_db_connection():
         traceback.print_exc()
         raise HTTPException(status_code=500, detail="Database connection failed")
 
-# Mock analysis function with realistic simulation
 async def run_mock_analysis(project_id: int, analysis_id: int):
     """Simulate running code analysis with realistic timing and logging"""
     print(f"🔬 Analysis: Starting mock analysis for project {project_id}, analysis {analysis_id}")
     
     conn = None
     try:
-        # Simulate analysis phases
         phases = [
             ("Cloning repository", 2),
             ("Installing dependencies", 3),
@@ -53,7 +49,6 @@ async def run_mock_analysis(project_id: int, analysis_id: int):
         total_expected = sum(duration for _, duration in phases)
         print(f"📊 Analysis: Expected total duration: {total_expected} seconds")
         
-        # Update status to running
         conn = await get_db_connection()
         await conn.execute(
             "UPDATE analyses SET status = 'running' WHERE id = $1",
@@ -62,13 +57,11 @@ async def run_mock_analysis(project_id: int, analysis_id: int):
         print(f"📝 Analysis: Status updated to 'running'")
         await conn.close()
         
-        # Simulate each phase
         for phase_name, duration in phases:
             print(f"⚙️ Analysis: {phase_name}...")
             await asyncio.sleep(duration)
             print(f"✅ Analysis: {phase_name} completed")
         
-        # Generate realistic mock scores
         scores = {
             "structure_score": round(random.uniform(75, 95), 1),
             "quality_score": round(random.uniform(70, 90), 1),
@@ -76,7 +69,6 @@ async def run_mock_analysis(project_id: int, analysis_id: int):
             "dependencies_score": round(random.uniform(85, 98), 1)
         }
         
-        # Calculate weighted overall score
         overall_score = round(
             scores["structure_score"] * 0.4 +
             scores["quality_score"] * 0.3 +
@@ -87,7 +79,6 @@ async def run_mock_analysis(project_id: int, analysis_id: int):
         
         print(f"📊 Analysis: Generated scores - Overall: {overall_score}%, Structure: {scores['structure_score']}%, Quality: {scores['quality_score']}%, Security: {scores['security_score']}%, Dependencies: {scores['dependencies_score']}%")
         
-        # Generate mock issues
         issues = [
             {
                 "category": "Structure",
@@ -125,10 +116,8 @@ async def run_mock_analysis(project_id: int, analysis_id: int):
         
         print(f"🔍 Analysis: Generated {len(issues)} mock issues")
         
-        # Update database with results
         conn = await get_db_connection()
         
-        # Update analysis record
         await conn.execute(
             """
             UPDATE analyses SET 
@@ -152,7 +141,6 @@ async def run_mock_analysis(project_id: int, analysis_id: int):
         
         print(f"✅ Analysis: Updated analysis record {analysis_id}")
         
-        # Insert issues
         for issue in issues:
             await conn.execute(
                 """
@@ -170,7 +158,6 @@ async def run_mock_analysis(project_id: int, analysis_id: int):
         
         print(f"✅ Analysis: Inserted {len(issues)} issues")
         
-        # Update project's last_analysis_id
         await conn.execute(
             "UPDATE projects SET last_analysis_id = $1 WHERE id = $2",
             analysis_id,
@@ -188,7 +175,6 @@ async def run_mock_analysis(project_id: int, analysis_id: int):
         print(f"📊 Analysis: Full error traceback:")
         traceback.print_exc()
         
-        # Update status to failed
         try:
             if not conn or conn.is_closed():
                 conn = await get_db_connection()
@@ -213,14 +199,11 @@ async def start_analysis(project_id: int, user: AuthorizedUser):
     
     conn = None
     try:
-        # Connect to database
         conn = await get_db_connection()
         
-        # Convert string user_id to a consistent integer representation
-        db_user_id = abs(hash(user_id)) % (2**31 - 1)  # Ensure positive 32-bit integer
+        db_user_id = abs(hash(user_id)) % (2**31 - 1)
         print(f"🔄 API: Converted user_id {user_id} to db_user_id {db_user_id}")
         
-        # Verify project ownership
         verify_start = time.time()
         print(f"🔍 Database: Verifying project ownership")
         
@@ -238,7 +221,6 @@ async def start_analysis(project_id: int, user: AuthorizedUser):
         
         print(f"📝 API: Verified project: {project['repo_owner']}/{project['repo_name']}")
         
-        # Check for existing running analysis
         running_check_start = time.time()
         print(f"🔍 Database: Checking for existing running analysis")
         
@@ -257,7 +239,6 @@ async def start_analysis(project_id: int, user: AuthorizedUser):
                 detail=f"Analysis already in progress (ID: {existing_analysis['id']})"
             )
         
-        # Create new analysis record
         create_start = time.time()
         print(f"➕ Database: Creating new analysis record")
         
@@ -277,7 +258,6 @@ async def start_analysis(project_id: int, user: AuthorizedUser):
         print(f"🎉 API: POST /projects/{project_id}/analyze completed in {total_time:.2f}ms")
         print(f"📈 API: New analysis ID: {analysis['id']}")
         
-        # Start background analysis
         print(f"🚀 Analysis: Starting background analysis task")
         asyncio.create_task(run_mock_analysis(project_id, analysis["id"]))
         
@@ -292,7 +272,6 @@ async def start_analysis(project_id: int, user: AuthorizedUser):
         }
         
     except HTTPException:
-        # Re-raise HTTP exceptions (they're already logged above)
         raise
     except asyncpg.PostgresError as e:
         error_time = (time.time() - operation_start) * 1000

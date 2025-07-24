@@ -16,54 +16,48 @@ import mimetypes
 
 router = APIRouter(prefix="/projects", tags=["Projects"])
 
-# Rate limiting decorator (simplified for now)
 def rate_limit(limit_string):
     """Decorator that applies rate limiting if available, otherwise does nothing"""
     def decorator(func):
-        # For now, just return the function without rate limiting
         # TODO: Implement proper rate limiting when slowapi is available
         return func
     return decorator
 
-# File upload configuration - Production Security Settings
-MAX_FILE_SIZE = 50 * 1024 * 1024  # 50MB per file (reduced for security)
-MAX_TOTAL_SIZE = 200 * 1024 * 1024  # 200MB total (reduced for security)
-MAX_FILES_COUNT = 1000  # Maximum number of files per upload
-MAX_FILENAME_LENGTH = 255  # Maximum filename length
-MAX_FILEPATH_LENGTH = 1000  # Maximum file path length
+MAX_FILE_SIZE = 50 * 1024 * 1024
+MAX_TOTAL_SIZE = 200 * 1024 * 1024
+MAX_FILES_COUNT = 1000
+MAX_FILENAME_LENGTH = 255
+MAX_FILEPATH_LENGTH = 1000
 
-# Allowed file extensions - restrictive for security
 ALLOWED_EXTENSIONS = {
-    '.py', '.pyx', '.pyi', '.pyw',  # Python files
-    '.txt', '.md', '.rst',  # Documentation (removed .doc for security)
-    '.json', '.yaml', '.yml', '.toml', '.cfg', '.ini',  # Config files
-    '.gitignore', '.gitattributes',  # Git files
-    '.dockerfile',  # Docker files (removed .dockerignore for security)
-    '.sql',  # Database files
-    '.env.example',  # Environment example files (removed .env for security)
+    '.py', '.pyx', '.pyi', '.pyw',
+    '.txt', '.md', '.rst',
+    '.json', '.yaml', '.yml', '.toml', '.cfg', '.ini',
+    '.gitignore', '.gitattributes',
+    '.dockerfile',
+    '.sql',
+    '.env.example',
 }
 
-# Dangerous extensions that should never be allowed
 DANGEROUS_EXTENSIONS = {
     '.exe', '.dll', '.so', '.dylib', '.bin', '.bat', '.cmd', '.ps1', '.sh',
     '.scr', '.com', '.pif', '.jar', '.war', '.ear', '.class', '.dex',
     '.apk', '.ipa', '.dmg', '.pkg', '.msi', '.rpm', '.deb',
-    '.zip', '.rar', '.7z', '.tar', '.gz', '.bz2', '.xz',  # Archives can contain malware
-    '.js', '.ts', '.jsx', '.tsx',  # JavaScript files (not needed for Python analysis)
-    '.php', '.asp', '.aspx', '.jsp',  # Web scripts
-    '.vbs', '.wsf', '.hta',  # Windows scripts
+    '.zip', '.rar', '.7z', '.tar', '.gz', '.bz2', '.xz',
+    '.js', '.ts', '.jsx', '.tsx',
+    '.php', '.asp', '.aspx', '.jsp',
+    '.vbs', '.wsf', '.hta',
 }
 
-# Suspicious filename patterns
 SUSPICIOUS_PATTERNS = [
-    r'\.\./',  # Directory traversal
-    r'[<>:"|?*]',  # Invalid filename characters
-    r'^(con|prn|aux|nul|com[1-9]|lpt[1-9])(\.|$)',  # Windows reserved names
-    r'^\.',  # Hidden files (except specific allowed ones)
-    r'__pycache__',  # Python cache directories
-    r'\.pyc$',  # Python bytecode
-    r'node_modules',  # Node.js dependencies
-    r'\.git/',  # Git directories
+    r'\.\./',
+    r'[<>:"|?*]',
+    r'^(con|prn|aux|nul|com[1-9]|lpt[1-9])(\.|$)',
+    r'^\.',
+    r'__pycache__',
+    r'\.pyc$',
+    r'node_modules',
+    r'\.git/',
 ]
 
 PYTHON_PROJECT_INDICATORS = {
@@ -72,15 +66,14 @@ PYTHON_PROJECT_INDICATORS = {
     'main.py', '__init__.py', 'app.py', 'manage.py'
 }
 
-# Content-based security checks
 MALICIOUS_CONTENT_PATTERNS = [
-    rb'<script',  # JavaScript
-    rb'eval\s*\(',  # Code evaluation
-    rb'exec\s*\(',  # Code execution
-    rb'__import__\s*\(',  # Dynamic imports
-    rb'subprocess\.',  # System commands
-    rb'os\.system',  # System commands
-    rb'shell=True',  # Shell execution
+    rb'<script',
+    rb'eval\s*\(',
+    rb'exec\s*\(',
+    rb'__import__\s*\(',
+    rb'subprocess\.',
+    rb'os\.system',
+    rb'shell=True',
 ]
 
 
@@ -119,7 +112,7 @@ class ProjectResponse(BaseModel):
     repo_name: str
     repo_owner: str
     repo_url: str
-    project_source: str = "github"  # 'github' or 'upload'
+    project_source: str = "github"
     upload_metadata: Optional[Dict] = None
     created_at: datetime
     latest_analysis: Optional[dict] = None
@@ -134,12 +127,10 @@ async def get_or_create_user(user_id: str) -> int:
     """Get existing user or create new user from auth ID"""
     conn = await get_db_connection()
     try:
-        # Convert Stack Auth user ID to database user ID (same as in github_auth)
         import hashlib
         hash_bytes = hashlib.sha256(user_id.encode()).digest()
         db_user_id = int.from_bytes(hash_bytes[:4], byteorder='big') % (2**31 - 1)
 
-        # Check if user exists by database ID (not github_id)
         user_row = await conn.fetchrow(
             "SELECT id FROM users WHERE id = $1",
             db_user_id
@@ -149,11 +140,9 @@ async def get_or_create_user(user_id: str) -> int:
             print(f"✅ User found: {user_id} -> DB ID {user_row['id']}")
             return user_row["id"]
         else:
-            # User doesn't exist - this shouldn't happen if GitHub OAuth worked
             print(f"❌ User not found in database: {user_id} -> DB ID {db_user_id}")
             print(f"⚠️ This suggests GitHub OAuth didn't complete properly")
 
-            # Return the expected DB ID anyway (GitHub OAuth should have created the user)
             return db_user_id
     finally:
         await conn.close()
@@ -179,7 +168,6 @@ def validate_mock_github_repo(repo_owner: str, repo_name: str) -> dict:
     }
 
 
-# Database connection helper
 async def get_db_connection():
     """Get database connection with logging"""
     try:
@@ -212,10 +200,8 @@ async def get_projects(user: AuthorizedUser) -> List[ProjectResponse]:
     
     conn = None
     try:
-        # Connect to database
         conn = await get_db_connection()
         
-        # Query projects
         query_start = time.time()
         print(f"🔍 Database: Querying projects for db_user_id {db_user_id}")
         
@@ -236,7 +222,6 @@ async def get_projects(user: AuthorizedUser) -> List[ProjectResponse]:
         
         print(f"✅ Database: Retrieved {len(rows)} projects in {query_time:.2f}ms")
         
-        # Transform results
         transform_start = time.time()
         projects = []
         
@@ -252,7 +237,6 @@ async def get_projects(user: AuthorizedUser) -> List[ProjectResponse]:
                 "latest_analysis": None
             }
             
-            # Add analysis data if available
             if row["last_analysis_id"]:
                 project_data["latest_analysis"] = {
                     "id": row["last_analysis_id"],
@@ -301,13 +285,10 @@ async def get_github_repositories(request: Request, user: AuthorizedUser) -> Git
     This endpoint delegates to the github_auth module for actual GitHub API integration.
     """
     try:
-        # Import here to avoid circular imports
         from app.apis.github_auth import get_github_repositories as fetch_github_repos
 
-        # Call the github_auth function to get repositories
         github_response = await fetch_github_repos(request, user)
 
-        # Transform the response to match our expected format
         repos = []
         for repo_data in github_response["repositories"]:
             repos.append(GitHubRepo(
@@ -326,7 +307,6 @@ async def get_github_repositories(request: Request, user: AuthorizedUser) -> Git
 
     except Exception as e:
         print(f"❌ Error fetching GitHub repositories: {str(e)}")
-        # Fallback to mock data if GitHub integration fails
         mock_repos = [
             GitHubRepo(
                 id=1,
@@ -392,19 +372,15 @@ async def create_project(request: ProjectCreateRequest, user: AuthorizedUser) ->
 
     conn = None
     try:
-        # Validate input
         if not request.repo_name or not request.repo_owner:
             print(f"❌ API: Invalid input - missing repo_name or repo_owner")
             raise HTTPException(status_code=400, detail="Repository name and owner are required")
 
-        # Ensure user exists in database (create if doesn't exist)
         db_user_id = await get_or_create_user(user.sub)
         print(f"🔄 ID Conversion: {user.sub} -> {db_user_id}")
 
-        # Connect to database
         conn = await get_db_connection()
         
-        # Check if project already exists
         check_start = time.time()
         print(f"🔍 Database: Checking for existing project {request.repo_owner}/{request.repo_name}")
         
@@ -424,7 +400,6 @@ async def create_project(request: ProjectCreateRequest, user: AuthorizedUser) ->
                 detail=f"Project {request.repo_owner}/{request.repo_name} already exists"
             )
         
-        # Create new project
         insert_start = time.time()
         print(f"➕ Database: Creating new project")
 
@@ -440,7 +415,7 @@ async def create_project(request: ProjectCreateRequest, user: AuthorizedUser) ->
             request.repo_name,
             request.repo_owner,
             request.repo_url,
-            'github'  # GitHub projects
+            'github'
         )
         
         insert_time = (time.time() - insert_start) * 1000
@@ -460,7 +435,6 @@ async def create_project(request: ProjectCreateRequest, user: AuthorizedUser) ->
         )
         
     except HTTPException:
-        # Re-raise HTTP exceptions (they're already logged above)
         raise
     except asyncpg.UniqueViolationError as e:
         error_time = (time.time() - operation_start) * 1000
@@ -489,7 +463,6 @@ async def create_project(request: ProjectCreateRequest, user: AuthorizedUser) ->
 def convert_user_id_to_int(user_id: str) -> int:
     """Convert string user ID to consistent integer for database compatibility"""
     import hashlib
-    # Using SHA256 for deterministic hash, ensuring positive 32-bit value
     hash_bytes = hashlib.sha256(user_id.encode()).digest()
     db_user_id = int.from_bytes(hash_bytes[:4], byteorder='big') % (2**31 - 1)
     print(f"🔄 ID Conversion: {user_id} -> {db_user_id}")
@@ -511,7 +484,6 @@ async def delete_project(project_id: int, user: AuthorizedUser):
     try:
         conn = await get_db_connection()
 
-        # Verify project exists and user owns it
         project_record = await conn.fetchrow(
             "SELECT id, repo_name, repo_owner, project_source FROM projects WHERE id = $1 AND user_id = $2",
             project_id, db_user_id
@@ -523,7 +495,6 @@ async def delete_project(project_id: int, user: AuthorizedUser):
 
         print(f"🔍 API: Found project {project_record['repo_owner']}/{project_record['repo_name']} (source: {project_record['project_source']})")
 
-        # Delete project and all related data (CASCADE will handle related tables)
         delete_result = await conn.execute(
             "DELETE FROM projects WHERE id = $1 AND user_id = $2",
             project_id, db_user_id
@@ -563,7 +534,6 @@ async def start_analysis(project_id: int, user: AuthorizedUser):
         db_user_id = convert_user_id_to_int(user.sub)
         conn = await get_db_connection()
         
-        # 1. Fetch the project details to verify ownership and get repo_url
         project_record = await conn.fetchrow(
             "SELECT repo_url FROM projects WHERE id = $1 AND user_id = $2",
             project_id, db_user_id
@@ -571,14 +541,12 @@ async def start_analysis(project_id: int, user: AuthorizedUser):
         if not project_record:
             raise HTTPException(status_code=404, detail="Project not found or access denied")
 
-        # 2. Fetch the user's GitHub token from the users table
         user_record = await conn.fetchrow(
             "SELECT github_access_token FROM users WHERE id = $1", db_user_id
         )
         if not user_record or not user_record['github_access_token']:
             raise HTTPException(status_code=403, detail="User GitHub token not found.")
         
-        # 3. Create a new Analysis record with status 'pending'
         analysis_id = await conn.fetchval(
             """
             INSERT INTO analyses (project_id, status, created_at, overall_score, structure_score, quality_score, security_score, dependencies_score)
@@ -588,7 +556,6 @@ async def start_analysis(project_id: int, user: AuthorizedUser):
             project_id
         )
         
-        # 4. Trigger the background task
         run_full_analysis.delay(
             analysis_id=analysis_id,
             repo_url=project_record['repo_url'],
@@ -622,7 +589,6 @@ async def get_project_files(project_id: int, user: AuthorizedUser, branch: str =
     try:
         conn = await get_db_connection()
 
-        # Verify project exists and user owns it
         project_record = await conn.fetchrow(
             "SELECT repo_name, repo_owner, repo_url, project_source FROM projects WHERE id = $1 AND user_id = $2",
             project_id, db_user_id
@@ -634,12 +600,10 @@ async def get_project_files(project_id: int, user: AuthorizedUser, branch: str =
 
         print(f"✅ API: Found project {project_record['repo_owner']}/{project_record['repo_name']} (source: {project_record['project_source']})")
 
-        # Only support GitHub projects for now
         if project_record['project_source'] != 'github':
             print(f"❌ API: Project source '{project_record['project_source']}' not supported for file structure")
             raise HTTPException(status_code=400, detail="File structure only available for GitHub projects")
 
-        # Get user's GitHub token
         print(f"🔑 API: Fetching GitHub token for user {db_user_id}")
         user_record = await conn.fetchrow(
             "SELECT github_access_token FROM users WHERE id = $1", db_user_id
@@ -650,14 +614,12 @@ async def get_project_files(project_id: int, user: AuthorizedUser, branch: str =
 
         print(f"✅ API: GitHub token found for user {db_user_id}")
 
-        # Import GitHub API functions
         import requests
 
         github_token = user_record['github_access_token']
         repo_owner = project_record['repo_owner']
         repo_name = project_record['repo_name']
 
-        # Get repository branches
         branches_url = f"https://api.github.com/repos/{repo_owner}/{repo_name}/branches"
         branches_response = requests.get(
             branches_url,
@@ -674,12 +636,10 @@ async def get_project_files(project_id: int, user: AuthorizedUser, branch: str =
         branches_data = branches_response.json()
         available_branches = [b['name'] for b in branches_data]
 
-        # Validate requested branch exists
         if branch not in available_branches:
             print(f"❌ API: Branch '{branch}' not found in {available_branches}")
             raise HTTPException(status_code=404, detail=f"Branch '{branch}' not found")
 
-        # Get file tree for the specified branch
         tree_url = f"https://api.github.com/repos/{repo_owner}/{repo_name}/git/trees/{branch}?recursive=1"
         tree_response = requests.get(
             tree_url,
@@ -695,25 +655,23 @@ async def get_project_files(project_id: int, user: AuthorizedUser, branch: str =
 
         tree_data = tree_response.json()
 
-        # Convert GitHub tree to our FileNode structure
         def build_file_tree(tree_items):
-            # Group items by path segments
             root_items = {}
 
             for item in tree_items:
-                if item['type'] in ['blob', 'tree']:  # blob = file, tree = folder
+                if item['type'] in ['blob', 'tree']:
                     path_parts = item['path'].split('/')
                     current_level = root_items
 
                     for i, part in enumerate(path_parts):
-                        if i == len(path_parts) - 1:  # Last part (file or empty folder)
+                        if i == len(path_parts) - 1:
                             if item['type'] == 'blob':
                                 current_level[part] = {
                                     'type': 'file',
                                     'path': item['path'],
                                     'name': part
                                 }
-                            else:  # tree (folder)
+                            else:
                                 if part not in current_level:
                                     current_level[part] = {
                                         'type': 'folder',
@@ -721,7 +679,7 @@ async def get_project_files(project_id: int, user: AuthorizedUser, branch: str =
                                         'name': part,
                                         'children': {}
                                     }
-                        else:  # Intermediate folder
+                        else:
                             if part not in current_level:
                                 current_level[part] = {
                                     'type': 'folder',
@@ -731,7 +689,6 @@ async def get_project_files(project_id: int, user: AuthorizedUser, branch: str =
                                 }
                             current_level = current_level[part]['children']
 
-            # Convert to list format
             def dict_to_list(items_dict):
                 result = []
                 for name, item in sorted(items_dict.items()):
@@ -794,7 +751,6 @@ async def get_file_content(project_id: int, file_path: str, user: AuthorizedUser
     try:
         conn = await get_db_connection()
 
-        # Verify project exists and user owns it
         project_record = await conn.fetchrow(
             "SELECT repo_name, repo_owner, project_source FROM projects WHERE id = $1 AND user_id = $2",
             project_id, db_user_id
@@ -804,11 +760,9 @@ async def get_file_content(project_id: int, file_path: str, user: AuthorizedUser
             print(f"❌ API: Project {project_id} not found or access denied for user {db_user_id}")
             raise HTTPException(status_code=404, detail="Project not found or access denied")
 
-        # Only support GitHub projects for now
         if project_record['project_source'] != 'github':
             raise HTTPException(status_code=400, detail="File content only available for GitHub projects")
 
-        # Get user's GitHub token
         user_record = await conn.fetchrow(
             "SELECT github_access_token FROM users WHERE id = $1", db_user_id
         )
@@ -822,7 +776,6 @@ async def get_file_content(project_id: int, file_path: str, user: AuthorizedUser
         repo_owner = project_record['repo_owner']
         repo_name = project_record['repo_name']
 
-        # Get file content from GitHub API
         file_url = f"https://api.github.com/repos/{repo_owner}/{repo_name}/contents/{file_path}?ref={branch}"
         file_response = requests.get(
             file_url,
@@ -840,7 +793,6 @@ async def get_file_content(project_id: int, file_path: str, user: AuthorizedUser
 
         file_data = file_response.json()
 
-        # Decode base64 content
         if file_data.get('encoding') == 'base64':
             try:
                 content = base64.b64decode(file_data['content']).decode('utf-8')
@@ -874,21 +826,17 @@ def validate_filename_security(filename: str) -> tuple[bool, str]:
     """Enhanced filename security validation"""
     import re
 
-    # Check filename length
     if len(filename) > MAX_FILENAME_LENGTH:
         return False, f"Filename too long (max {MAX_FILENAME_LENGTH} characters)"
 
-    # Check for dangerous extensions
     ext = Path(filename).suffix.lower()
     if ext in DANGEROUS_EXTENSIONS:
         return False, f"Dangerous file type: {ext}"
 
-    # Check for suspicious patterns
     for pattern in SUSPICIOUS_PATTERNS:
         if re.search(pattern, filename, re.IGNORECASE):
             return False, f"Suspicious filename pattern detected"
 
-    # Check for null bytes and control characters
     if '\x00' in filename or any(ord(c) < 32 for c in filename if c not in '\t\n\r'):
         return False, "Invalid characters in filename"
 
@@ -905,19 +853,15 @@ def validate_file_size(file_size: int) -> bool:
 
 def validate_file_content_security(content: bytes, filename: str) -> tuple[bool, str]:
     """Basic content security validation"""
-    # Check for malicious patterns in content
     for pattern in MALICIOUS_CONTENT_PATTERNS:
         if pattern in content:
             return False, f"Potentially malicious content detected in {filename}"
 
-    # Check for binary files that shouldn't be there
     if b'\x00' in content and not filename.endswith(('.pyc', '.pyo')):
-        # Allow some binary content but be suspicious of null bytes
         null_ratio = content.count(b'\x00') / len(content) if content else 0
-        if null_ratio > 0.1:  # More than 10% null bytes
+        if null_ratio > 0.1:
             return False, f"Suspicious binary content in {filename}"
 
-    # Check file size vs content size consistency
     if len(content) == 0 and not filename.endswith(('__init__.py', '.gitkeep')):
         return False, f"Empty file detected: {filename}"
 
@@ -927,12 +871,10 @@ def sanitize_filename(filename: str) -> str:
     """Sanitize filename for safe storage"""
     import re
 
-    # Remove or replace dangerous characters
     filename = re.sub(r'[<>:"|?*]', '_', filename)
-    filename = re.sub(r'\.\.+', '.', filename)  # Multiple dots
-    filename = filename.strip('. ')  # Leading/trailing dots and spaces
+    filename = re.sub(r'\.\.+', '.', filename)
+    filename = filename.strip('. ')
 
-    # Ensure it's not empty after sanitization
     if not filename:
         filename = 'unnamed_file'
 
@@ -944,7 +886,6 @@ def analyze_python_project_simple(files_metadata: List[Dict]) -> Dict[str, Any]:
     project_files = [f['filename'].lower() for f in files_metadata]
     indicators_found = PYTHON_PROJECT_INDICATORS.intersection(set(project_files))
 
-    # Calculate confidence score
     confidence = 0.0
     detected_frameworks = []
     entry_points = []
@@ -952,11 +893,9 @@ def analyze_python_project_simple(files_metadata: List[Dict]) -> Dict[str, Any]:
     warnings = []
     errors = []
 
-    # Basic checks
     if python_files:
         confidence += 0.4
 
-        # Check for common Python patterns
         for py_file in python_files:
             filename = py_file['filename'].lower()
             if filename in ['main.py', 'app.py', 'run.py', 'server.py']:
@@ -969,7 +908,6 @@ def analyze_python_project_simple(files_metadata: List[Dict]) -> Dict[str, Any]:
     if indicators_found:
         confidence += 0.3
 
-        # Analyze specific indicators
         if 'requirements.txt' in project_files:
             dependencies.append('pip requirements')
             confidence += 0.1
@@ -983,37 +921,30 @@ def analyze_python_project_simple(files_metadata: List[Dict]) -> Dict[str, Any]:
             detected_frameworks.append('Setuptools Package')
             confidence += 0.1
 
-    # Framework detection based on file patterns
     for file_meta in files_metadata:
         filename = file_meta['filename'].lower()
 
-        # Django detection
         if filename == 'manage.py' or 'django' in filename:
             detected_frameworks.append('Django')
             confidence += 0.1
 
-        # Flask detection
         elif 'flask' in filename or filename in ['wsgi.py', 'application.py']:
             detected_frameworks.append('Flask')
             confidence += 0.1
 
-        # FastAPI detection
         elif 'fastapi' in filename or filename in ['main.py', 'api.py']:
             if 'FastAPI' not in detected_frameworks:
                 detected_frameworks.append('FastAPI')
                 confidence += 0.1
 
-        # Jupyter notebooks
         elif filename.endswith('.ipynb'):
             detected_frameworks.append('Jupyter Notebook')
             confidence += 0.05
 
-        # Data science indicators
         elif filename in ['analysis.py', 'model.py', 'train.py', 'predict.py']:
             detected_frameworks.append('Data Science')
             confidence += 0.05
 
-    # Structure analysis
     has_src_structure = any('src/' in f['filename'] for f in files_metadata)
     has_tests = any('test' in f['filename'].lower() for f in files_metadata)
     has_docs = any('doc' in f['filename'].lower() or 'readme' in f['filename'].lower() for f in files_metadata)
@@ -1028,7 +959,6 @@ def analyze_python_project_simple(files_metadata: List[Dict]) -> Dict[str, Any]:
         confidence += 0.05
         warnings.append("Documentation files detected")
 
-    # Validation checks
     if not python_files and not indicators_found:
         errors.append("No Python files or project indicators found")
         confidence = 0.0
@@ -1042,10 +972,9 @@ def analyze_python_project_simple(files_metadata: List[Dict]) -> Dict[str, Any]:
     if total_size > MAX_TOTAL_SIZE:
         errors.append(f"Project too large ({total_size / 1024 / 1024:.1f}MB > {MAX_TOTAL_SIZE / 1024 / 1024}MB)")
 
-    if total_size < 1024:  # Less than 1KB
+    if total_size < 1024:
         warnings.append("Project seems very small - may be incomplete")
 
-    # Check for suspicious files
     suspicious_extensions = {'.exe', '.dll', '.so', '.dylib', '.bin'}
     suspicious_files = [f for f in files_metadata if any(f['filename'].lower().endswith(ext) for ext in suspicious_extensions)]
     if suspicious_files:
@@ -1077,7 +1006,6 @@ def validate_github_repository(repo_data: Dict[str, Any]) -> Dict[str, Any]:
     errors = []
     confidence = 0.0
 
-    # Language check
     language = repo_data.get('language') or ''
     language = language.lower() if language else ''
     if language == 'python':
@@ -1088,7 +1016,6 @@ def validate_github_repository(repo_data: Dict[str, Any]) -> Dict[str, Any]:
         warnings.append(f"Repository language is {language}, not Python")
         confidence -= 0.2
 
-    # Repository activity
     updated_at = repo_data.get('updated_at', '')
     if updated_at:
         try:
@@ -1106,21 +1033,18 @@ def validate_github_repository(repo_data: Dict[str, Any]) -> Dict[str, Any]:
         except Exception:
             pass
 
-    # Repository size and activity indicators
     stars = repo_data.get('stargazers_count', 0)
     if stars > 100:
         confidence += 0.1
     elif stars > 10:
         confidence += 0.05
 
-    # Repository name analysis
     repo_name = repo_data.get('name') or ''
     repo_name = repo_name.lower() if repo_name else ''
     python_keywords = ['python', 'py', 'django', 'flask', 'fastapi', 'api', 'web', 'app', 'tool', 'script']
     if any(keyword in repo_name for keyword in python_keywords):
         confidence += 0.1
 
-    # Description analysis
     description = repo_data.get('description') or ''
     description = description.lower() if description else ''
     if description:
@@ -1131,11 +1055,9 @@ def validate_github_repository(repo_data: Dict[str, Any]) -> Dict[str, Any]:
     else:
         warnings.append("Repository has no description")
 
-    # Check if it's a fork
     if repo_data.get('fork', False):
         warnings.append("This is a forked repository")
 
-    # Private repository check
     if repo_data.get('private', False):
         warnings.append("This is a private repository")
 
@@ -1155,7 +1077,7 @@ def validate_github_repository(repo_data: Dict[str, Any]) -> Dict[str, Any]:
 
 
 @router.post("/upload", response_model=FileUploadResponse)
-@rate_limit("5/minute")  # Strict rate limiting for uploads
+@rate_limit("5/minute")
 async def upload_project_files(
     user: AuthorizedUser,
     files: List[UploadFile] = File(...),
@@ -1172,11 +1094,9 @@ async def upload_project_files(
     print(f"📁 API: Received {len(files)} files")
 
     try:
-        # Process and validate files with enhanced security
         files_metadata = []
         total_size = 0
 
-        # Check total file count
         if len(files) > MAX_FILES_COUNT:
             raise HTTPException(
                 status_code=413,
@@ -1187,7 +1107,6 @@ async def upload_project_files(
             if not file.filename:
                 continue
 
-            # Enhanced filename security validation
             filename_valid, filename_error = validate_filename_security(file.filename)
             if not filename_valid:
                 raise HTTPException(
@@ -1195,28 +1114,23 @@ async def upload_project_files(
                     detail=f"Security validation failed for {file.filename}: {filename_error}"
                 )
 
-            # Sanitize filename
             safe_filename = sanitize_filename(file.filename)
 
-            # Validate file extension
             if not validate_file_extension(safe_filename):
                 raise HTTPException(
                     status_code=400,
                     detail=f"File type not allowed: {safe_filename}"
                 )
 
-            # Read file content
             content = await file.read()
             file_size = len(content)
 
-            # Validate file size
             if not validate_file_size(file_size):
                 raise HTTPException(
                     status_code=413,
                     detail=f"File too large: {safe_filename} ({file_size / 1024 / 1024:.1f}MB > {MAX_FILE_SIZE / 1024 / 1024}MB)"
                 )
 
-            # Content security validation
             content_valid, content_error = validate_file_content_security(content, safe_filename)
             if not content_valid:
                 raise HTTPException(
@@ -1226,7 +1140,6 @@ async def upload_project_files(
 
             total_size += file_size
 
-            # Check total size limit
             if total_size > MAX_TOTAL_SIZE:
                 raise HTTPException(
                     status_code=413,
@@ -1240,12 +1153,10 @@ async def upload_project_files(
                 'mime_type': mimetypes.guess_type(file.filename)[0]
             })
 
-            # Reset file position for potential re-reading
             await file.seek(0)
 
         print(f"💾 API: Processed {len(files_metadata)} files ({total_size / 1024 / 1024:.1f}MB)")
 
-        # Analyze project
         validation_result = analyze_python_project_simple(files_metadata)
         print(f"🔍 API: Project analysis - Python: {validation_result['is_python_project']}, Confidence: {validation_result['confidence_score']:.2f}")
 
@@ -1261,14 +1172,11 @@ async def upload_project_files(
                 detail=f"Project validation failed: {', '.join(validation_result['errors'])}"
             )
 
-        # Generate project name if not provided
         if not project_name:
             project_name = f"uploaded-project-{int(time.time())}"
 
-        # Create project in database
         conn = await get_db_connection()
         try:
-            # Check for duplicate project name
             existing = await conn.fetchrow(
                 "SELECT id FROM projects WHERE user_id = $1 AND repo_name = $2",
                 db_user_id, project_name
@@ -1280,7 +1188,6 @@ async def upload_project_files(
                     detail=f"Project '{project_name}' already exists"
                 )
 
-            # Insert new project with upload metadata
             project_id = await conn.fetchval(
                 """
                 INSERT INTO projects (user_id, repo_name, repo_owner, repo_url, project_source, upload_metadata, created_at)
@@ -1289,13 +1196,12 @@ async def upload_project_files(
                 """,
                 db_user_id,
                 project_name,
-                user.email or "uploaded",  # Use email as owner for uploaded projects
-                f"upload://{project_name}",  # Special URL format for uploaded projects
-                'upload',  # Project source
-                validation_result  # Store validation results as JSON
+                user.email or "uploaded",
+                f"upload://{project_name}",
+                'upload',
+                validation_result
             )
 
-            # Insert file metadata
             for i, file_meta in enumerate(files_metadata):
                 await conn.execute(
                     """
@@ -1316,9 +1222,6 @@ async def upload_project_files(
             await conn.close()
 
         # TODO: In a real implementation, you would:
-        # 1. Store files in persistent storage (S3, local filesystem, etc.)
-        # 2. Create analysis tasks for the uploaded project
-        # 3. Handle file metadata in database
 
         total_time = (time.time() - operation_start) * 1000
         print(f"🎉 API: Upload completed successfully in {total_time:.2f}ms")
@@ -1333,7 +1236,6 @@ async def upload_project_files(
         )
 
     except HTTPException:
-        # Re-raise HTTP exceptions as-is
         raise
     except Exception as e:
         print(f"❌ API: Upload error: {str(e)}")

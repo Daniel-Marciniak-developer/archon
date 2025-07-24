@@ -12,7 +12,6 @@ from app.models.github_connection import (
     GitHubConnectionCreate
 )
 
-# Optional rate limiting
 try:
     from slowapi import Limiter
     from slowapi.util import get_remote_address
@@ -30,9 +29,7 @@ def rate_limit(limit_string):
         return func
     return decorator
 
-# Router for endpoints
 router = APIRouter()
-# Public router for endpoints that don't require auth (like OAuth callbacks)
 public_router = APIRouter()
 
 class GitHubConnectionStatus(BaseModel):
@@ -43,17 +40,14 @@ class GitHubConnectionStatus(BaseModel):
 class GitHubAuthUrlResponse(BaseModel):
     auth_url: str
 
-# Development mode configuration - bypasses real GitHub OAuth
 DEVELOPMENT_MODE = os.getenv("APP_ENV", "development") != "production"
 
-# Mock GitHub user data for development
 MOCK_GITHUB_USER = {
-    "connected": False,  # Default state
+    "connected": False,
     "username": "demo-user",
     "avatar_url": "https://avatars.githubusercontent.com/u/12345?v=4"
 }
 
-# In-memory storage for development (replace with database in production)
 user_github_connections = {}
 
 @router.get("/github/status")
@@ -65,7 +59,6 @@ async def get_github_connection_status(request: Request, user: AuthorizedUser) -
     try:
         from app.libs.database import get_db_connection
 
-        # Convert Stack Auth user ID to database user ID
         def convert_user_id_to_int(user_id: str) -> int:
             import hashlib
             hash_bytes = hashlib.sha256(user_id.encode()).digest()
@@ -74,7 +67,6 @@ async def get_github_connection_status(request: Request, user: AuthorizedUser) -
         db_user_id = convert_user_id_to_int(user.sub)
         print(f"🔗 GitHub: Checking connection status for user {user.sub} (DB ID: {db_user_id})")
 
-        # Check if user has GitHub access token in database
         conn = await get_db_connection()
         try:
             user_record = await conn.fetchrow(
@@ -112,7 +104,6 @@ async def connect_github(request: Request, user: AuthorizedUser) -> GitHubAuthUr
     try:
         import os
 
-        # Get GitHub OAuth credentials from environment
         github_client_id = os.getenv("GITHUB_CLIENT_ID")
         github_redirect_uri = os.getenv("GITHUB_REDIRECT_URI")
 
@@ -122,13 +113,11 @@ async def connect_github(request: Request, user: AuthorizedUser) -> GitHubAuthUr
                 detail="GitHub OAuth not configured. Please contact administrator."
             )
 
-        # Generate state parameter for security (should be stored in session/database)
         import secrets
         state = secrets.token_urlsafe(32)
 
         # TODO: Store state in database/session for verification
 
-        # GitHub OAuth URL with required scopes
         github_oauth_url = (
             f"https://github.com/login/oauth/authorize"
             f"?client_id={github_client_id}"
@@ -160,7 +149,6 @@ async def github_oauth_callback(request: Request, user: AuthorizedUser):
         import httpx
         from app.libs.database import get_db_connection
 
-        # Get callback data from request
         data = await request.json()
         code = data.get("code")
         state = data.get("state")
@@ -170,7 +158,6 @@ async def github_oauth_callback(request: Request, user: AuthorizedUser):
 
         # TODO: Verify state parameter for security
 
-        # Exchange code for access token
         github_client_id = os.getenv("GITHUB_CLIENT_ID")
         github_client_secret = os.getenv("GITHUB_CLIENT_SECRET")
 
@@ -181,7 +168,6 @@ async def github_oauth_callback(request: Request, user: AuthorizedUser):
             )
 
         async with httpx.AsyncClient() as client:
-            # Exchange authorization code for access token
             token_response = await client.post(
                 "https://github.com/login/oauth/access_token",
                 headers={"Accept": "application/json"},
@@ -209,7 +195,6 @@ async def github_oauth_callback(request: Request, user: AuthorizedUser):
                     detail="No access token received from GitHub"
                 )
 
-            # Get user info from GitHub to verify token
             user_response = await client.get(
                 "https://api.github.com/user",
                 headers={"Authorization": f"Bearer {access_token}"}
@@ -228,7 +213,6 @@ async def github_oauth_callback(request: Request, user: AuthorizedUser):
 
             print(f"✅ GitHub: Successfully authenticated {github_username} (ID: {github_id})")
 
-            # Store access token in database
             def convert_user_id_to_int(user_id: str) -> int:
                 import hashlib
                 hash_bytes = hashlib.sha256(user_id.encode()).digest()
@@ -238,7 +222,6 @@ async def github_oauth_callback(request: Request, user: AuthorizedUser):
 
             conn = await get_db_connection()
             try:
-                # Insert or update user's GitHub data (upsert)
                 await conn.execute(
                     """
                     INSERT INTO users (id, github_id, username, avatar_url, github_access_token)
@@ -275,8 +258,6 @@ async def disconnect_github(user: AuthorizedUser):
     This endpoint just returns a message.
     """
     try:
-        # GitHub connection is managed by Stack Auth
-        # User needs to disconnect via Stack Auth settings
         raise HTTPException(
             status_code=400,
             detail="GitHub disconnection is handled by Stack Auth. Please use account settings."
@@ -292,12 +273,10 @@ async def get_github_repositories(request: Request, user: AuthorizedUser):
     Get user's GitHub repositories using real GitHub OAuth
     """
     try:
-        # Get user's GitHub access token from database
         import asyncpg
         import httpx
         from app.libs.database import get_db_connection
 
-        # Convert Stack Auth user ID to database user ID
         def convert_user_id_to_int(user_id: str) -> int:
             import hashlib
             hash_bytes = hashlib.sha256(user_id.encode()).digest()
@@ -306,7 +285,6 @@ async def get_github_repositories(request: Request, user: AuthorizedUser):
         db_user_id = convert_user_id_to_int(user.sub)
         print(f"🔗 GitHub: Getting repositories for user {user.sub} (DB ID: {db_user_id})")
 
-        # Get user's GitHub access token from database
         conn = await get_db_connection()
         try:
             user_record = await conn.fetchrow(
@@ -318,7 +296,6 @@ async def get_github_repositories(request: Request, user: AuthorizedUser):
                 print(f"⚠️ GitHub: No valid access token found for user {user.sub}")
                 print(f"📝 Using mock repositories for user: {user.name or user.email or user.sub[:8]}")
 
-                # Return personalized mock repositories
                 return {
             "repositories": [
                 {
@@ -363,19 +340,16 @@ async def get_github_repositories(request: Request, user: AuthorizedUser):
             ]
         }
 
-            # User has valid GitHub access token - fetch real repositories
             github_token = user_record['github_access_token']
             print(f"🔑 GitHub: Using access token to fetch real repositories for user {user.sub}")
 
             async with httpx.AsyncClient() as client:
-                # Make request to GitHub API
                 headers = {
                     "Authorization": f"Bearer {github_token}",
                     "Accept": "application/vnd.github.v3+json",
                     "User-Agent": "Archon-Code-Analyzer/1.0"
                 }
 
-                # Fetch user's repositories
                 github_response = await client.get(
                     "https://api.github.com/user/repos",
                     headers=headers,
@@ -388,7 +362,6 @@ async def get_github_repositories(request: Request, user: AuthorizedUser):
 
                 if github_response.status_code == 401:
                     print("❌ GitHub: Invalid access token")
-                    # Token is invalid, fall back to mock data
                     print(f"📝 Using mock repositories for user: {user.name or user.email or user.sub[:8]}")
                     return {
                         "repositories": [
@@ -423,7 +396,6 @@ async def get_github_repositories(request: Request, user: AuthorizedUser):
                 repos_data = github_response.json()
                 print(f"✅ GitHub: Fetched {len(repos_data)} real repositories for user {user.sub}")
 
-                # Transform GitHub API response to our format
                 repositories = []
                 for repo in repos_data:
                     repositories.append({

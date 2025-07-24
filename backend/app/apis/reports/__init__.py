@@ -3,7 +3,6 @@ from pydantic import BaseModel, Field
 import asyncio
 from typing import List
 
-# Optional rate limiting
 try:
     from slowapi import Limiter
     from slowapi.util import get_remote_address
@@ -43,7 +42,6 @@ class ProjectReport(BaseModel):
     dependencies_score: float
     issues: List[Issue]
 
-# Mock data generation
 def create_mock_report(project_id: int) -> ProjectReport:
     """Creates a more realistic mock report for a multi-file project."""
     return ProjectReport(
@@ -65,7 +63,6 @@ def create_mock_report(project_id: int) -> ProjectReport:
 
 @router.post("/projects/{project_id}/analyze", status_code=202)
 async def start_analysis(project_id: int):
-    # This is the placeholder for the long-running analysis
     print(f"Starting analysis for project {project_id}...")
     return {"message": "Analysis started"}
 
@@ -73,12 +70,10 @@ async def start_analysis(project_id: int):
 @router.get("/reports/{project_id}", response_model=ProjectReport)
 @rate_limit("30/minute")
 async def get_project_report(request: Request, project_id: int):
-    # Validate project_id
     if project_id <= 0:
         raise HTTPException(status_code=400, detail="Project ID must be positive")
 
-    # For now, we always return a fresh mock report.
-    await asyncio.sleep(1) # Simulate network delay
+    await asyncio.sleep(1)
     report = create_mock_report(project_id)
     if not report:
         raise HTTPException(status_code=404, detail="Report not found")
