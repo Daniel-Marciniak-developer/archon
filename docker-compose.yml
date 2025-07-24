@@ -49,8 +49,10 @@ services:
       - DATABASE_URL_DEV=postgresql://archon_user:archon_password@postgres:5432/archon_dev
       - DATABASE_URL_ADMIN_DEV=postgresql://archon_user:archon_password@postgres:5432/archon_dev
       - REDIS_URL=redis://redis:6379/0
-      - DATABUTTON_SERVICE_TYPE=development
-      - DATABUTTON_EXTENSIONS=[{"name":"shadcn","version":"1"},{"name":"stack-auth","version":"1","config":{"projectId":"97bafa9b-894f-4d26-9dd4-6f0f69c41954","publishableClientKey":"pck_qz8nx0vvfaadked7dkqzg4whks8gzga6bb6txf10m9z4r","jwksUrl":"https://api.stack-auth.com/api/v1/projects/97bafa9b-894f-4d26-9dd4-6f0f69c41954/.well-known/jwks.json","secretRefForSecretServerKey":{"name":"STACK_SECRET_SERVER_KEY"}}},{"name":"neon-database","version":"1","config":{"neonProjectId":"autumn-block-95755914","secretRefs":{"env":{"prod":{"admin":{"name":"DATABASE_URL_ADMIN_PROD"},"app":{"name":"DATABASE_URL_PROD"}},"dev":{"admin":{"name":"DATABASE_URL_ADMIN_DEV"},"app":{"name":"DATABASE_URL_DEV"}}}}}}]
+      - ARCHON_SERVICE_TYPE=development
+      - STACK_AUTH_PROJECT_ID=97bafa9b-894f-4d26-9dd4-6f0f69c41954
+      - STACK_AUTH_PUBLISHABLE_CLIENT_KEY=pck_qz8nx0vvfaadked7dkqzg4whks8gzga6bb6txf10m9z4r
+      - STACK_AUTH_JWKS_URL=https://api.stack-auth.com/api/v1/projects/97bafa9b-894f-4d26-9dd4-6f0f69c41954/.well-known/jwks.json
     ports:
       - "8000:8000"
     volumes:
@@ -76,7 +78,7 @@ services:
       - DATABASE_URL_DEV=postgresql://archon_user:archon_password@postgres:5432/archon_dev
       - DATABASE_URL_ADMIN_DEV=postgresql://archon_user:archon_password@postgres:5432/archon_dev
       - REDIS_URL=redis://redis:6379/0
-      - DATABUTTON_SERVICE_TYPE=development
+      - ARCHON_SERVICE_TYPE=development
     volumes:
       - ./backend:/app
     networks:
@@ -96,8 +98,8 @@ services:
       dockerfile: Dockerfile
     container_name: archon-frontend
     environment:
-      - VITE_API_URL=http://localhost:8000
-      - VITE_WS_API_URL=ws://localhost:8000
+      - VITE_API_URL=http://backend:8000
+      - VITE_WS_API_URL=ws://backend:8000
     ports:
       - "5173:5173"
     volumes:
