@@ -1,6 +1,4 @@
-"""
-Production-ready configuration management for Archon backend.
-"""
+
 import os
 from typing import Optional
 from pydantic import Field
@@ -10,28 +8,21 @@ from pydantic_settings import BaseSettings
 class Settings(BaseSettings):
     """Application settings with environment variable support."""
     
-    # Application
     app_env: str = Field(default="development", env="APP_ENV")
     debug: bool = Field(default=True, env="DEBUG")
     
-    # Database
     database_url: str = Field(default="postgresql://archon_user:archon_password@postgres:5432/archon_dev", env="DATABASE_URL_DEV")
     
-    # Redis
     redis_url: str = Field(default="redis://localhost:6379/0", env="REDIS_URL")
     
-    # Security
     jwt_secret_key: str = Field(default="dev-secret-key", env="JWT_SECRET_KEY")
     
-    # GitHub OAuth
     github_client_id: Optional[str] = Field(default=None, env="GITHUB_CLIENT_ID")
     github_client_secret: Optional[str] = Field(default=None, env="GITHUB_CLIENT_SECRET")
     github_redirect_uri: Optional[str] = Field(default=None, env="GITHUB_REDIRECT_URI")
     
-    # Production
     production_domain: Optional[str] = Field(default=None, env="PRODUCTION_DOMAIN")
     
-    # Stack Auth
     stack_auth_project_id: Optional[str] = Field(default=None, env="STACK_AUTH_PROJECT_ID")
     stack_auth_publishable_key: Optional[str] = Field(default=None, env="STACK_AUTH_PUBLISHABLE_CLIENT_KEY")
     stack_auth_secret_key: Optional[str] = Field(default=None, env="STACK_AUTH_SECRET_SERVER_KEY")
@@ -58,8 +49,7 @@ class Settings(BaseSettings):
     class Config:
         env_file = ".env"
         case_sensitive = False
-        extra = "ignore"  # Ignore extra environment variables
+        extra = "ignore"
 
 
-# Global settings instance
 settings = Settings()

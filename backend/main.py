@@ -8,11 +8,10 @@ from fastapi.middleware.trustedhost import TrustedHostMiddleware
 
 dotenv.load_dotenv()
 
-from databutton_app.mw.auth_mw import AuthConfig, get_authorized_user
+from app.auth.middleware import AuthConfig, get_authorized_user
 from app.config import settings
 from app.middleware.security import SecurityHeadersMiddleware, RequestLoggingMiddleware
 
-# Optional rate limiting - graceful fallback if slowapi not available
 try:
     from slowapi import Limiter, _rate_limit_exceeded_handler
     from slowapi.util import get_remote_address
@@ -27,7 +26,6 @@ except ImportError:
 
 def get_router_config() -> dict:
     try:
-        # Note: This file is not available to the agent
         cfg = json.loads(open("routers.json").read())
     except:
         return False
@@ -39,14 +37,9 @@ def is_auth_disabled(router_config: dict, name: str) -> bool:
 
 
 def import_api_routers() -> APIRouter:
-    """Create top level router including all user defined endpoints."""
     routes = APIRouter(prefix="/routes")
-
     router_config = get_router_config()
-
     src_path = pathlib.Path(__file__).parent
-
-    # Import API routers from "src/app/apis/*/__init__.py"
     apis_path = src_path / "app" / "apis"
 
     api_names = [
@@ -61,7 +54,6 @@ def import_api_routers() -> APIRouter:
         try:
             api_module = __import__(api_module_prefix + name, fromlist=[name])
 
-            # Include main router with auth
             api_router = getattr(api_module, "router", None)
             if isinstance(api_router, APIRouter):
                 routes.include_router(
@@ -73,7 +65,6 @@ def import_api_routers() -> APIRouter:
                     ),
                 )
 
-            # Include public router without auth (if exists)
             public_router = getattr(api_module, "public_router", None)
             if isinstance(public_router, APIRouter):
                 routes.include_router(public_router)
@@ -82,46 +73,28 @@ def import_api_routers() -> APIRouter:
             continue
 
     print(routes.routes)
-
     return routes
 
 
-def get_firebase_config() -> dict | None:
-    extensions = os.environ.get("DATABUTTON_EXTENSIONS", "[]")
-    extensions = json.loads(extensions)
-
-    for ext in extensions:
-        if ext["name"] == "firebase-auth":
-            return ext["config"]["firebaseConfig"]
-
-    return None
-
-
 def get_stack_auth_config() -> dict | None:
-    extensions = os.environ.get("DATABUTTON_EXTENSIONS", "[]")
-    extensions = json.loads(extensions)
-
-    for ext in extensions:
-        if ext["name"] == "stack-auth":
-            return ext["config"]
-
-    return None
+    return {
+        "projectId": os.environ.get("STACK_AUTH_PROJECT_ID"),
+        "publishableClientKey": os.environ.get("STACK_AUTH_PUBLISHABLE_CLIENT_KEY"),
+        "jwksUrl": os.environ.get("STACK_AUTH_JWKS_URL"),
+    }
 
 
 def create_app() -> FastAPI:
-    """Create the app. This is called by uvicorn with the factory option to construct the app object."""
-    # Use settings for configuration
     is_production = settings.is_production
 
     app = FastAPI(
         title="Archon Code Analysis API",
         description="Secure code analysis platform",
         version="1.0.0",
-        docs_url="/docs" if not is_production else None,  # Disable docs in production
+        docs_url="/docs" if not is_production else None,
         redoc_url="/redoc" if not is_production else None,
     )
 
-    # Add security middleware
     if RATE_LIMITING_AVAILABLE:
         app.state.limiter = limiter
         app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
@@ -129,15 +102,13 @@ def create_app() -> FastAPI:
     else:
         print("⚠️ Rate limiting disabled - install slowapi for production")
 
-    # CORS configuration
     allowed_origins = [
-        "http://localhost:5173",  # Development frontend
-        "http://localhost:5174",  # Development frontend (alternative port)
-        "http://localhost:3000",  # Alternative dev port
+        "http://localhost:5173",
+        "http://localhost:5174",
+        "http://localhost:3000",
     ]
 
     if is_production:
-        # Add production domains
         if settings.production_domain:
             allowed_origins.extend([
                 f"https://{settings.production_domain}",
@@ -152,9 +123,7 @@ def create_app() -> FastAPI:
         allow_headers=["*"],
     )
 
-    # Security middleware
     if is_production:
-        # Trusted host middleware
         trusted_hosts = ["localhost", "127.0.0.1"]
         if settings.production_domain:
             trusted_hosts.extend([settings.production_domain, f"www.{settings.production_domain}"])
@@ -170,9 +139,8 @@ def create_app() -> FastAPI:
             for method in route.methods:
                 print(f"{method} {route.path}")
 
-    # Try Stack Auth first, then Firebase as fallback
     stack_auth_config = get_stack_auth_config()
-    firebase_config = get_firebase_config()
+    firebase_config = None
 
     if stack_auth_config is not None:
         print("Stack Auth config found")

@@ -6,36 +6,31 @@ import os
 from typing import Dict, List, Set
 from pathlib import Path
 
-# Environment-based security settings
 PRODUCTION_MODE = os.getenv("APP_ENV", "development") == "production"
 
 class SecurityConfig:
     """Centralized security configuration"""
     
-    # File Upload Security
-    MAX_FILE_SIZE = 50 * 1024 * 1024 if PRODUCTION_MODE else 100 * 1024 * 1024  # 50MB prod, 100MB dev
-    MAX_TOTAL_SIZE = 200 * 1024 * 1024 if PRODUCTION_MODE else 500 * 1024 * 1024  # 200MB prod, 500MB dev
-    MAX_FILES_COUNT = 500 if PRODUCTION_MODE else 1000  # Stricter in production
+    MAX_FILE_SIZE = 50 * 1024 * 1024 if PRODUCTION_MODE else 100 * 1024 * 1024
+    MAX_TOTAL_SIZE = 200 * 1024 * 1024 if PRODUCTION_MODE else 500 * 1024 * 1024
+    MAX_FILES_COUNT = 500 if PRODUCTION_MODE else 1000
     MAX_FILENAME_LENGTH = 255
     MAX_FILEPATH_LENGTH = 1000
     
-    # Rate Limiting (requests per minute)
     UPLOAD_RATE_LIMIT = "3/minute" if PRODUCTION_MODE else "10/minute"
     API_RATE_LIMIT = "60/minute" if PRODUCTION_MODE else "120/minute"
     GITHUB_RATE_LIMIT = "20/minute"
     
-    # Allowed file extensions - very restrictive in production
     ALLOWED_EXTENSIONS: Set[str] = {
-        '.py', '.pyx', '.pyi', '.pyw',  # Python files
-        '.txt', '.md', '.rst',  # Documentation
-        '.json', '.yaml', '.yml', '.toml', '.cfg', '.ini',  # Config files
-        '.gitignore', '.gitattributes',  # Git files
-        '.dockerfile',  # Docker files
-        '.sql',  # Database files
-        '.env.example',  # Environment example files
+        '.py', '.pyx', '.pyi', '.pyw',
+        '.txt', '.md', '.rst',
+        '.json', '.yaml', '.yml', '.toml', '.cfg', '.ini',
+        '.gitignore', '.gitattributes',
+        '.dockerfile',
+        '.sql',
+        '.env.example',
     }
     
-    # Dangerous extensions that should never be allowed
     DANGEROUS_EXTENSIONS: Set[str] = {
         '.exe', '.dll', '.so', '.dylib', '.bin', '.bat', '.cmd', '.ps1', '.sh',
         '.scr', '.com', '.pif', '.jar', '.war', '.ear', '.class', '.dex',
@@ -46,38 +41,35 @@ class SecurityConfig:
         '.vbs', '.wsf', '.hta', '.reg',
     }
     
-    # Content security patterns
     MALICIOUS_CONTENT_PATTERNS: List[bytes] = [
-        rb'<script',  # JavaScript
-        rb'eval\s*\(',  # Code evaluation
-        rb'exec\s*\(',  # Code execution
-        rb'__import__\s*\(',  # Dynamic imports
-        rb'subprocess\.',  # System commands
-        rb'os\.system',  # System commands
-        rb'shell=True',  # Shell execution
-        rb'import\s+os',  # OS imports (suspicious in uploads)
-        rb'from\s+os\s+import',  # OS imports
-        rb'pickle\.loads',  # Pickle deserialization
-        rb'marshal\.loads',  # Marshal deserialization
+        rb'<script',
+        rb'eval\s*\(',
+        rb'exec\s*\(',
+        rb'__import__\s*\(',
+        rb'subprocess\.',
+        rb'os\.system',
+        rb'shell=True',
+        rb'import\s+os',
+        rb'from\s+os\s+import',
+        rb'pickle\.loads',
+        rb'marshal\.loads',
     ]
     
-    # Suspicious filename patterns
     SUSPICIOUS_PATTERNS: List[str] = [
-        r'\.\./',  # Directory traversal
-        r'[<>:"|?*]',  # Invalid filename characters
-        r'^(con|prn|aux|nul|com[1-9]|lpt[1-9])(\.|$)',  # Windows reserved names
-        r'^\.',  # Hidden files (except specific allowed ones)
-        r'__pycache__',  # Python cache directories
-        r'\.pyc$',  # Python bytecode
-        r'node_modules',  # Node.js dependencies
-        r'\.git/',  # Git directories
-        r'\.svn/',  # SVN directories
-        r'\.hg/',  # Mercurial directories
-        r'\.DS_Store',  # macOS metadata
-        r'Thumbs\.db',  # Windows metadata
+        r'\.\./',
+        r'[<>:"|?*]',
+        r'^(con|prn|aux|nul|com[1-9]|lpt[1-9])(\.|$)',
+        r'^\.',
+        r'__pycache__',
+        r'\.pyc$',
+        r'node_modules',
+        r'\.git/',
+        r'\.svn/',
+        r'\.hg/',
+        r'\.DS_Store',
+        r'Thumbs\.db',
     ]
     
-    # Security headers for HTTP responses
     SECURITY_HEADERS: Dict[str, str] = {
         "X-Content-Type-Options": "nosniff",
         "X-Frame-Options": "DENY",
@@ -88,18 +80,15 @@ class SecurityConfig:
         "Permissions-Policy": "geolocation=(), microphone=(), camera=()",
     }
     
-    # Logging and monitoring
     LOG_SECURITY_EVENTS = True
     LOG_FILE_UPLOADS = True
     LOG_FAILED_VALIDATIONS = True
     
-    # Virus scanning (placeholder for future implementation)
     ENABLE_VIRUS_SCANNING = PRODUCTION_MODE
-    VIRUS_SCAN_TIMEOUT = 30  # seconds
+    VIRUS_SCAN_TIMEOUT = 30
     
-    # Content analysis limits
-    MAX_CONTENT_ANALYSIS_SIZE = 10 * 1024 * 1024  # 10MB
-    CONTENT_ANALYSIS_TIMEOUT = 10  # seconds
+    MAX_CONTENT_ANALYSIS_SIZE = 10 * 1024 * 1024
+    CONTENT_ANALYSIS_TIMEOUT = 10
     
     @classmethod
     def get_upload_limits(cls) -> Dict[str, int]:
@@ -126,7 +115,6 @@ class SecurityConfig:
         """Get security headers for HTTP responses"""
         return cls.SECURITY_HEADERS.copy()
 
-# Security event logging
 class SecurityLogger:
     """Security event logger"""
     
@@ -152,17 +140,14 @@ class SecurityLogger:
         """Log rate limit exceeded"""
         print(f"🛑 SECURITY: Rate limit exceeded - User: {user_id}, Endpoint: {endpoint}")
 
-# Security utilities
 def sanitize_user_input(input_str: str, max_length: int = 1000) -> str:
     """Sanitize user input for logging and storage"""
     if not input_str:
         return ""
     
-    # Truncate if too long
     if len(input_str) > max_length:
         input_str = input_str[:max_length] + "..."
     
-    # Remove control characters except newlines and tabs
     sanitized = ''.join(char for char in input_str if ord(char) >= 32 or char in '\n\t')
     
     return sanitized
@@ -183,5 +168,4 @@ def generate_security_report() -> Dict[str, any]:
         }
     }
 
-# Export main configuration
 __all__ = ['SecurityConfig', 'SecurityLogger', 'sanitize_user_input', 'generate_security_report']
