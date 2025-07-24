@@ -51,6 +51,7 @@ export class Brain<SecurityDataType = unknown> extends HttpClient<SecurityDataTy
     this.request<StartAnalysisData, StartAnalysisError>({
       path: `/routes/projects/${projectId}/analyze`,
       method: "POST",
+      secure: true,
       ...params,
     });
 
@@ -66,6 +67,7 @@ export class Brain<SecurityDataType = unknown> extends HttpClient<SecurityDataTy
     this.request<GetProjectsData, any>({
       path: `/routes/projects`,
       method: "GET",
+      secure: true,
       ...params,
     });
 
@@ -83,6 +85,7 @@ export class Brain<SecurityDataType = unknown> extends HttpClient<SecurityDataTy
       method: "POST",
       body: data,
       type: ContentType.Json,
+      secure: true,
       ...params,
     });
 
@@ -98,6 +101,7 @@ export class Brain<SecurityDataType = unknown> extends HttpClient<SecurityDataTy
     this.request<GetGithubRepositoriesData, any>({
       path: `/routes/github/repositories`,
       method: "GET",
+      secure: true,
       ...params,
     });
 
@@ -115,6 +119,7 @@ export class Brain<SecurityDataType = unknown> extends HttpClient<SecurityDataTy
     this.request<StartAnalysis2Data, StartAnalysis2Error>({
       path: `/routes/projects/${projectId}/analyze`,
       method: "POST",
+      secure: true,
       ...params,
     });
 
@@ -132,6 +137,7 @@ export class Brain<SecurityDataType = unknown> extends HttpClient<SecurityDataTy
       method: "POST",
       body: data,
       type: ContentType.FormData,
+      secure: true,
       ...params,
     });
 
@@ -149,6 +155,7 @@ export class Brain<SecurityDataType = unknown> extends HttpClient<SecurityDataTy
       method: "POST",
       body: data,
       type: ContentType.Json,
+      secure: true,
       ...params,
     });
 
@@ -164,6 +171,7 @@ export class Brain<SecurityDataType = unknown> extends HttpClient<SecurityDataTy
     this.request<GetGithubConnectionStatusData, any>({
       path: `/routes/github/status`,
       method: "GET",
+      secure: true,
       ...params,
     });
 
@@ -179,6 +187,7 @@ export class Brain<SecurityDataType = unknown> extends HttpClient<SecurityDataTy
     this.request<ConnectGithubData, any>({
       path: `/routes/github/connect`,
       method: "GET",
+      secure: true,
       ...params,
     });
 
@@ -195,6 +204,7 @@ export class Brain<SecurityDataType = unknown> extends HttpClient<SecurityDataTy
       path: `/routes/github/callback`,
       method: "GET",
       query: query,
+      secure: true,
       ...params,
     });
 
@@ -212,6 +222,7 @@ export class Brain<SecurityDataType = unknown> extends HttpClient<SecurityDataTy
       method: "POST",
       body: data,
       type: ContentType.Json,
+      secure: true,
       ...params,
     });
 
@@ -227,6 +238,7 @@ export class Brain<SecurityDataType = unknown> extends HttpClient<SecurityDataTy
     this.request<DisconnectGithubData, any>({
       path: `/routes/github/disconnect`,
       method: "DELETE",
+      secure: true,
       ...params,
     });
 
@@ -242,6 +254,40 @@ export class Brain<SecurityDataType = unknown> extends HttpClient<SecurityDataTy
     this.request<GetProjectReportData, GetProjectReportError>({
       path: `/routes/reports/${projectId}`,
       method: "GET",
+      secure: true,
+      ...params,
+    });
+
+  /**
+   * @description Get file structure for a GitHub project
+   * @tags Projects
+   * @name get_project_files
+   * @summary Get Project Files
+   * @request GET:/routes/projects/{project_id}/files
+   */
+  get_project_files = (projectId: number, branch: string = "main", params: RequestParams = {}) =>
+    this.request<any, any>({
+      path: `/routes/projects/${projectId}/files`,
+      method: "GET",
+      query: { branch },
+      secure: true,
+      format: "json",
+      ...params,
+    });
+
+  /**
+   * @description Get content of a specific file from a GitHub project
+   * @tags Projects
+   * @name get_file_content
+   * @summary Get File Content
+   * @request GET:/routes/projects/{project_id}/files/content
+   */
+  get_file_content = (projectId: number, filePath: string, branch: string = "main", params: RequestParams = {}) =>
+    this.request<any, any>({
+      path: `/routes/projects/${projectId}/files/content`,
+      method: "GET",
+      query: { file_path: filePath, branch },
+      secure: true,
       ...params,
     });
 }
