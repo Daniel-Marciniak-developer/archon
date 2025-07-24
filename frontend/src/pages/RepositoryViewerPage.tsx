@@ -76,8 +76,22 @@ export const RepositoryViewerPage: React.FC = () => {
       throw new Error('Brak autoryzacji');
     }
 
-    const response = await brain.get_file_content(parseInt(projectId), filePath, currentBranch);
-    return response.data.content;
+    try {
+      const response = await brain.get_file_content(parseInt(projectId), filePath, currentBranch);
+
+      if (!response.data) {
+        throw new Error('Brak danych w odpowiedzi serwera');
+      }
+
+      if (!response.data.content) {
+        throw new Error('Brak zawartości pliku w odpowiedzi');
+      }
+
+      return response.data.content;
+    } catch (error) {
+      console.error('Error fetching file content:', error);
+      throw error;
+    }
   }, [projectId, user, currentBranch]);
 
   // Funkcja do zmiany gałęzi
