@@ -1,13 +1,11 @@
 import os
 from celery import Celery
 
-# Get the Redis URL from environment variables. Fallback for local development if needed.
 redis_url = os.getenv("REDIS_URL")
 if not redis_url:
     print("⚠️ REDIS_URL environment variable not found. Using default for local dev.")
     redis_url = "redis://localhost:6379/0"
 
-# Initialize the Celery app
 celery_app = Celery(
     "tasks",
     broker=redis_url,

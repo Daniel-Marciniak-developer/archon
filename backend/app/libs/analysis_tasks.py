@@ -49,15 +49,11 @@ def run_full_analysis(self, analysis_id: int, repo_url: str, github_token: str):
     """
     project_path = None
     try:
-        # 1. Update status to 'running'
         print(f"[{analysis_id}] 🏃‍♂️ Analysis task started. Setting status to 'running'.")
-        # asyncio.run(set_analysis_status(analysis_id, "running"))
 
-        # 2. Clone the repository
         project_path = tempfile.mkdtemp()
         print(f"[{analysis_id}] 📂 Cloning {repo_url} into {project_path}...")
         
-        # Use token for private repos
         clone_url = repo_url.replace("https://", f"https://oauth2:{github_token}@")
         subprocess.run(
             ["git", "clone", clone_url, project_path],
@@ -66,22 +62,18 @@ def run_full_analysis(self, analysis_id: int, repo_url: str, github_token: str):
         )
         print(f"[{analysis_id}] ✅ Cloning complete.")
         
-        # 3. Run the analysis engine
         print(f"[{analysis_id}] 🔬 Running analysis engine...")
         report = run_analysis(project_path)
         print(f"[{analysis_id}] 📊 Engine finished. Found {len(report['issues'])} issues.")
 
-        # 4. Save results to the database
         print(f"[{analysis_id}] 💾 Saving results to the database...")
         asyncio.run(_update_db_with_results(analysis_id, report))
         print(f"[{analysis_id}] ✅ Database update complete.")
 
     except Exception as e:
         print(f"[{analysis_id}] ❌ ERROR during analysis: {e}")
-        # In a real app, you might want to update the analysis status to 'failed' here
         raise
     finally:
-        # 5. Clean up the temporary directory
         if project_path and os.path.exists(project_path):
             shutil.rmtree(project_path)
             print(f"[{analysis_id}] 🧹 Cleaned up temporary directory: {project_path}")

@@ -8,11 +8,11 @@ from pydantic import BaseModel
 
 class GitHubConnection(BaseModel):
     """Model for GitHub connection data."""
-    user_id: str  # Stack Auth user ID
+    user_id: str
     github_user_id: int
     username: str
     avatar_url: Optional[str] = None
-    access_token: str  # Encrypted in production
+    access_token: str
     created_at: datetime
     updated_at: datetime
 
@@ -34,7 +34,6 @@ class GitHubConnectionUpdate(BaseModel):
     updated_at: Optional[datetime] = None
 
 
-# In-memory storage for development (replace with database in production)
 github_connections_db: dict[str, GitHubConnection] = {}
 
 

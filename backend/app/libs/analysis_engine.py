@@ -3,13 +3,10 @@ import subprocess
 import os
 from typing import List, Dict, Any
 
-# Define severity mappings and penalties
 SEVERITY_MAPPING = {
-    # Bandit severities: LOW, MEDIUM, HIGH
     "LOW": "Low",
     "MEDIUM": "Medium",
     "HIGH": "High",
-    # Ruff severities are part of the error code, e.g., F841 -> We'll use a default
 }
 
 SEVERITY_PENALTIES = {
@@ -19,12 +16,11 @@ SEVERITY_PENALTIES = {
     "Low": 1,
 }
 
-# Define category weights
 CATEGORY_WEIGHTS = {
     "Structure": 0.4,
     "Code Quality": 0.3,
     "Security": 0.2,
-    "Dependencies": 0.1, # Not yet implemented
+    "Dependencies": 0.1,
 }
 
 
@@ -49,16 +45,13 @@ def _run_tool(command: List[str], project_path: str) -> Dict[str, Any]:
         )
         return json.loads(result.stdout)
     except FileNotFoundError:
-        # This happens if the tool (e.g., ruff) is not installed
         tool = command[0]
         print(f"Error: The analysis tool '{tool}' was not found.")
         raise
     except subprocess.CalledProcessError as e:
-        # This happens if the tool returns a non-zero exit code
         print(f"Error running tool {' '.join(command)}: {e.stderr}")
-        return {} # Return empty dict if tool fails
+        return {}
     except json.JSONDecodeError as e:
-        # This happens if the tool's output is not valid JSON
         print(f"Error decoding JSON from {' '.join(command)}: {e}")
         return {}
 
@@ -68,8 +61,8 @@ def _parse_ruff_output(data: List[Dict[str, Any]]) -> List[StandardizedIssue]:
     issues = []
     for item in data:
         issues.append({
-            "category": "Code Quality", # Ruff covers quality, style, etc.
-            "severity": "Medium", # Ruff doesn't provide severity, so we use a default
+            "category": "Code Quality",
+            "severity": "Medium",
             "title": f"{item['code']}: {item['message']}",
             "description": item['message'],
             "file_path": item['filename'],
@@ -100,7 +93,7 @@ def _calculate_scores(issues: List[StandardizedIssue]) -> Dict[str, float]:
         "Structure": 100.0,
         "Code Quality": 100.0,
         "Security": 100.0,
-        "Dependencies": 100.0, # Placeholder
+        "Dependencies": 100.0,
     }
     
     for issue in issues:
@@ -108,11 +101,9 @@ def _calculate_scores(issues: List[StandardizedIssue]) -> Dict[str, float]:
         if issue["category"] in scores:
             scores[issue["category"]] -= penalty
 
-    # Ensure scores don't go below zero
     for category in scores:
         scores[category] = max(0, scores[category])
 
-    # Calculate weighted overall score
     overall_score = (
         scores["Structure"] * CATEGORY_WEIGHTS["Structure"] +
         scores["Code Quality"] * CATEGORY_WEIGHTS["Code Quality"] +
@@ -131,11 +122,9 @@ def run_analysis(project_path: str) -> Dict[str, Any]:
     """
     print(f"Starting analysis for project at: {project_path}")
 
-    # Step 1: Run analysis tools
     ruff_output = _run_tool(["ruff", "check", ".", "--output-format=json", "--force-exclude"], project_path)
     bandit_output = _run_tool(["bandit", "-r", ".", "-f", "json"], project_path)
 
-    # Step 2: Parse and standardize results
     ruff_issues = _parse_ruff_output(ruff_output)
     bandit_issues = _parse_bandit_output(bandit_output)
     all_issues = ruff_issues + bandit_issues
@@ -143,10 +132,8 @@ def run_analysis(project_path: str) -> Dict[str, Any]:
     print(f"Found {len(ruff_issues)} issues with Ruff.")
     print(f"Found {len(bandit_issues)} issues with Bandit.")
 
-    # Step 3: Calculate scores
     scores = _calculate_scores(all_issues)
     
-    # Step 4: Return a complete report
     report = {
         "overall_score": scores["overall_score"],
         "structure_score": scores["Structure"],
@@ -159,20 +146,16 @@ def run_analysis(project_path: str) -> Dict[str, Any]:
     print(f"Analysis complete. Overall score: {report['overall_score']:.2f}%")
     return report
 
-# Example of how to run this for testing (optional)
 if __name__ == "__main__":
-    # Create a dummy project for testing
     if not os.path.exists("test_project"):
         os.makedirs("test_project")
     with open("test_project/main.py", "w") as f:
-        f.write("import os\n\n") # Unused import (Ruff)
-        f.write("password = '12345'\n") # Hardcoded password (Bandit)
+        f.write("import os\n\n")
+        f.write("password = '12345'\n")
 
-    # Run the analysis
     test_report = run_analysis("./test_project")
     print("\n--- ANALYSIS REPORT ---")
     print(json.dumps(test_report, indent=2))
     
-    # Clean up
     os.remove("test_project/main.py")
     os.rmdir("test_project")

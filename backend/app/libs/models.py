@@ -1,5 +1,4 @@
 
-# Here you can write code for reusable functions and variables that you want to use
 from typing import Optional
 from datetime import datetime
 from pydantic import BaseModel, Field
@@ -30,7 +29,6 @@ class IssueSeverity(str, Enum):
     LOW = "Low"
 
 
-# Base models for database entities
 class UserBase(BaseModel):
     """Base user model with common fields"""
     github_id: int
@@ -166,7 +164,6 @@ class Issue(IssueBase):
         from_attributes = True
 
 
-# Response models with relationships
 class ProjectWithAnalysis(Project):
     """Project model with latest analysis information"""
     latest_analysis: Optional[Analysis] = None
@@ -182,7 +179,7 @@ class AnalysisReport(BaseModel):
     project: Project
     analysis: Analysis
     issues: list[Issue]
-    issue_counts: dict[str, dict[str, int]]  # category -> severity -> count
+    issue_counts: dict[str, dict[str, int]]
 
 
 class UserWithProjects(User):

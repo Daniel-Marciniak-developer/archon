@@ -16,14 +16,12 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request: Request, call_next: Callable) -> Response:
         response = await call_next(request)
         
-        # Security headers
         response.headers["X-Content-Type-Options"] = "nosniff"
         response.headers["X-Frame-Options"] = "DENY"
         response.headers["X-XSS-Protection"] = "1; mode=block"
         response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
         response.headers["Permissions-Policy"] = "geolocation=(), microphone=(), camera=()"
         
-        # Content Security Policy (adjust as needed)
         csp = (
             "default-src 'self'; "
             "script-src 'self' 'unsafe-inline'; "
@@ -34,7 +32,6 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
         )
         response.headers["Content-Security-Policy"] = csp
         
-        # HSTS for HTTPS (only in production)
         if request.url.scheme == "https":
             response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
         
@@ -54,7 +51,6 @@ class RequestLoggingMiddleware(BaseHTTPMiddleware):
         start_time = time.time()
         client_ip = self.get_client_ip(request)
 
-        # Enhanced rate limiting
         if await self.check_rate_limit(request, client_ip):
             print(f"🛑 SECURITY: Rate limit exceeded for {client_ip} on {request.url.path}")
             return JSONResponse(
@@ -62,7 +58,6 @@ class RequestLoggingMiddleware(BaseHTTPMiddleware):
                 content={"detail": "Rate limit exceeded. Please try again later."}
             )
 
-        # Security validation
         validation_error = self.validate_request_security(request)
         if validation_error:
             print(f"🚨 SECURITY: Invalid request from {client_ip}: {validation_error}")
@@ -71,20 +66,17 @@ class RequestLoggingMiddleware(BaseHTTPMiddleware):
                 content={"detail": "Invalid request"}
             )
 
-        # Log request details
         user_agent = request.headers.get("user-agent", "unknown")[:100]
         print(f"📝 REQUEST: {request.method} {request.url.path} from {client_ip}")
 
         response = await call_next(request)
 
-        # Log response and check for slow requests
         processing_time = time.time() - start_time
         print(f"📤 RESPONSE: {response.status_code} ({processing_time:.3f}s)")
 
-        if processing_time > 5:  # Log slow requests
+        if processing_time > 5:
             print(f"⚠️ SLOW REQUEST: {processing_time:.2f}s for {request.url.path}")
 
-        # Cleanup rate limiting data periodically
         if time.time() - self.last_cleanup > 60:
             await self.cleanup_rate_limit_data()
             self.last_cleanup = time.time()
@@ -114,7 +106,6 @@ class RequestLoggingMiddleware(BaseHTTPMiddleware):
         client_data = self.request_counts[client_ip]
         current_count = client_data.get(minute_window, 0)
 
-        # Determine rate limit based on endpoint and production mode
         path = request.url.path
         if "/upload" in path:
             limit = 3 if self.production_mode else 10
@@ -133,7 +124,6 @@ class RequestLoggingMiddleware(BaseHTTPMiddleware):
 
     def validate_request_security(self, request: Request) -> Optional[str]:
         """Enhanced security validation"""
-        # Check request size
         content_length = request.headers.get("content-length")
         if content_length:
             try:
@@ -144,18 +134,15 @@ class RequestLoggingMiddleware(BaseHTTPMiddleware):
             except ValueError:
                 return "Invalid content-length header"
 
-        # Check for directory traversal
         path = str(request.url.path)
         if "../" in path or "..%2f" in path.lower() or "..%5c" in path.lower():
             return "Directory traversal attempt"
 
-        # Check for suspicious user agents
         user_agent = request.headers.get("user-agent", "").lower()
         suspicious_agents = ["sqlmap", "nikto", "nmap", "masscan", "zap"]
         if any(agent in user_agent for agent in suspicious_agents):
             return "Suspicious user agent detected"
 
-        # Check for suspicious headers
         suspicious_headers = ["x-forwarded-host", "x-original-url", "x-rewrite-url"]
         for header in suspicious_headers:
             if header in request.headers:
@@ -186,8 +173,7 @@ class FileUploadSecurityValidator:
         print(f"🔒 UPLOAD ATTEMPT: IP: {client_ip}, User: {user_id}, "
               f"Files: {file_count}, Size: {total_size / 1024 / 1024:.1f}MB")
 
-        # Alert on large uploads
-        if total_size > 100 * 1024 * 1024:  # 100MB
+        if total_size > 100 * 1024 * 1024:
             print(f"⚠️ LARGE UPLOAD: {total_size / 1024 / 1024:.1f}MB from {client_ip}")
 
     @staticmethod
@@ -203,7 +189,6 @@ class FileUploadSecurityValidator:
               f"File: {filename}, Pattern: {pattern}")
 
 
-# Security monitoring utilities
 def log_security_event(event_type: str, client_ip: str, details: str):
     """Log security events for monitoring"""
     timestamp = time.strftime('%Y-%m-%d %H:%M:%S')
