@@ -1,7 +1,7 @@
 import { APP_BASE_PATH } from '@/constants';
 import { useStackApp, useUser, type CurrentInternalServerUser, type CurrentUser } from "@stackframe/react";
 import * as React from "react";
-import { createContext, useContext, useEffect, useState } from "react";
+import { createContext, useContext, useEffect, useState, useMemo } from "react";
 import { Navigate, useLocation } from "react-router-dom";
 
 type UserGuardContextType = {
@@ -36,8 +36,11 @@ export const UserGuard = (props: {
   children: React.ReactNode;
 }) => {
   const app = useStackApp()
-  const user = useUser()
+  const rawUser = useUser()
   const [isInitialLoad, setIsInitialLoad] = useState(true)
+
+  // Stabilize user object to prevent infinite re-renders
+  const user = useMemo(() => rawUser, [rawUser?.id || null]);
 
   const { pathname } = useLocation();
 
@@ -50,12 +53,7 @@ export const UserGuard = (props: {
     return () => clearTimeout(timer)
   }, [])
 
-  // Debug logging (only when user state changes)
-  useEffect(() => {
-    if (!isInitialLoad) {
-      console.log('🛡️ UserGuard: User state:', user ? 'LOGGED IN' : 'NOT LOGGED IN', 'on', pathname);
-    }
-  }, [user, isInitialLoad, pathname]);
+
 
   // Show loading during initial load
   if (isInitialLoad) {
@@ -70,9 +68,6 @@ export const UserGuard = (props: {
     if (pathname !== app.urls.signOut && pathname !== '/' && pathname !== '/dashboard') {
       writeToLocalStorage('dtbn-login-next', pathname);
       queryParams.set("next", pathname);
-    } else if (pathname === '/dashboard') {
-      // For dashboard, don't set next param to avoid loops
-      console.log('🛡️ UserGuard: Dashboard access without user, not setting next param');
     }
 
     const queryString = queryParams.toString();

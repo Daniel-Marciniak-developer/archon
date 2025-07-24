@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useUser } from '@stackframe/react';
 import { RepositoryViewer } from '@/components/RepositoryViewer';
@@ -7,6 +7,8 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, AlertCircle } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
+import brain from '@/brain';
+import { auth } from '@/app/auth';
 
 interface RepositoryData {
   repository: {
@@ -28,19 +30,22 @@ interface RepositoryData {
 export const RepositoryViewerPage: React.FC = () => {
   const { projectId } = useParams<{ projectId: string }>();
   const navigate = useNavigate();
-  const user = useUser();
+  const rawUser = useUser();
+
+  // Stabilize user object to prevent infinite re-renders
+  const user = useMemo(() => rawUser, [rawUser?.id || null]);
+
+
 
   const [repositoryData, setRepositoryData] = useState<RepositoryData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [currentBranch, setCurrentBranch] = useState('main');
+  const [hasInitialized, setHasInitialized] = useState(false);
 
   // Funkcja do pobierania danych repozytorium
   const fetchRepositoryData = useCallback(async (branch: string = 'main') => {
-    console.log('🔄 RepositoryViewer: Starting fetchRepositoryData', { projectId, branch, hasUser: !!user });
-
     if (!projectId || !user) {
-      console.log('❌ RepositoryViewer: Missing projectId or user', { projectId, hasUser: !!user });
       return;
     }
 
@@ -48,53 +53,19 @@ export const RepositoryViewerPage: React.FC = () => {
       setIsLoading(true);
       setError(null);
 
-      // Pobierz token asynchronicznie
-      console.log('🔑 RepositoryViewer: Getting auth token...');
-      const authJson = await user.getAuthJson();
-      const accessToken = authJson.accessToken;
+      const response = await brain.get_project_files(parseInt(projectId), branch);
 
-      if (!accessToken) {
-        console.log('❌ RepositoryViewer: No access token available');
-        setError('Brak tokenu autoryzacji');
-        return;
+      if (!response.data) {
+        throw new Error('Brak danych w odpowiedzi z serwera');
       }
 
-      console.log('✅ RepositoryViewer: Access token obtained');
-      console.log('📡 RepositoryViewer: Sending request to backend', { url: `/routes/projects/${projectId}/files?branch=${encodeURIComponent(branch)}` });
-
-      const response = await fetch(
-        `/routes/projects/${projectId}/files?branch=${encodeURIComponent(branch)}`,
-        {
-          headers: {
-            'Authorization': `Bearer ${accessToken}`,
-            'Content-Type': 'application/json',
-          },
-        }
-      );
-
-      console.log('📡 RepositoryViewer: Response received', { status: response.status, ok: response.ok });
-
-      if (!response.ok) {
-        console.log('❌ RepositoryViewer: Response not OK', { status: response.status, statusText: response.statusText });
-        if (response.status === 404) {
-          throw new Error('Projekt nie został znaleziony lub nie masz do niego dostępu');
-        } else if (response.status === 403) {
-          throw new Error('Brak dostępu do GitHub. Sprawdź połączenie z GitHub.');
-        } else {
-          throw new Error(`Błąd pobierania danych: ${response.status}`);
-        }
-      }
-
-      console.log('🔄 RepositoryViewer: Parsing JSON response...');
-      const data = await response.json();
-      console.log('✅ RepositoryViewer: Data received successfully', { filesCount: data.files?.length || 0, branches: data.branches?.length || 0 });
+      const data = response.data;
       setRepositoryData(data);
       setCurrentBranch(branch);
+      setHasInitialized(true);
     } catch (err) {
-      console.error('❌ RepositoryViewer: Error fetching repository data:', err);
       setError(err instanceof Error ? err.message : 'Wystąpił nieoczekiwany błąd');
     } finally {
-      console.log('🏁 RepositoryViewer: fetchRepositoryData completed');
       setIsLoading(false);
     }
   }, [projectId, user]);
@@ -105,34 +76,8 @@ export const RepositoryViewerPage: React.FC = () => {
       throw new Error('Brak autoryzacji');
     }
 
-    // Pobierz token asynchronicznie
-    const authJson = await user.getAuthJson();
-    const accessToken = authJson.accessToken;
-
-    if (!accessToken) {
-      throw new Error('Brak tokenu autoryzacji');
-    }
-
-    const response = await fetch(
-      `/routes/projects/${projectId}/files/content?file_path=${encodeURIComponent(filePath)}&branch=${encodeURIComponent(currentBranch)}`,
-      {
-        headers: {
-          'Authorization': `Bearer ${accessToken}`,
-          'Content-Type': 'application/json',
-        },
-      }
-    );
-
-    if (!response.ok) {
-      if (response.status === 404) {
-        throw new Error('Plik nie został znaleziony');
-      } else {
-        throw new Error(`Błąd pobierania pliku: ${response.status}`);
-      }
-    }
-
-    const data = await response.json();
-    return data.content;
+    const response = await brain.get_file_content(parseInt(projectId), filePath, currentBranch);
+    return response.data.content;
   }, [projectId, user, currentBranch]);
 
   // Funkcja do zmiany gałęzi
@@ -145,44 +90,21 @@ export const RepositoryViewerPage: React.FC = () => {
     if (!projectId || !user) return;
 
     try {
-      console.log('Starting analysis for files:', selectedFilePaths);
+      const response = await brain.start_analysis({ projectId: parseInt(projectId) });
 
-      // Pobierz token asynchronicznie
-      const authJson = await user.getAuthJson();
-      const accessToken = authJson.accessToken;
-
-      if (!accessToken) {
-        throw new Error('Brak tokenu autoryzacji');
-      }
-
-      const response = await fetch(`/routes/projects/${projectId}/analyze`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${accessToken}`,
-          'Content-Type': 'application/json',
-        },
-      });
-
-      if (!response.ok) {
-        throw new Error(`Błąd rozpoczęcia analizy: ${response.status}`);
-      }
-
-      const result = await response.json();
-      console.log('Analysis started:', result);
-      
       // Przekieruj do strony z wynikami analizy
       navigate(`/projects/${projectId}/report`);
     } catch (err) {
-      console.error('Error starting analysis:', err);
       setError(err instanceof Error ? err.message : 'Błąd rozpoczęcia analizy');
     }
   }, [projectId, user, navigate]);
 
   // Efekt do pobierania danych przy załadowaniu strony
   useEffect(() => {
-    console.log('🚀 RepositoryViewer: useEffect triggered', { projectId, hasUser: !!user });
-    fetchRepositoryData();
-  }, [fetchRepositoryData]);
+    if (projectId && user && !hasInitialized) {
+      fetchRepositoryData();
+    }
+  }, [projectId, user, fetchRepositoryData]);
 
   // Komponent ładowania
   if (isLoading) {
