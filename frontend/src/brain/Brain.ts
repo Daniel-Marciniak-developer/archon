@@ -288,6 +288,7 @@ export class Brain<SecurityDataType = unknown> extends HttpClient<SecurityDataTy
       method: "GET",
       query: { file_path: filePath, branch },
       secure: true,
+      format: "json",
       ...params,
     });
 }
