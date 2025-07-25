@@ -2,21 +2,21 @@ export type QueryParamsType = Record<string | number, any>;
 export type ResponseFormat = keyof Omit<Body, "body" | "bodyUsed">;
 
 export interface FullRequestParams extends Omit<RequestInit, "body"> {
-  /** set parameter to `true` for call `securityWorker` for this request */
+  
   secure?: boolean;
-  /** request path */
+  
   path: string;
-  /** content type of request body */
+  
   type?: ContentType;
-  /** query params */
+  
   query?: QueryParamsType;
-  /** format of response (i.e. response.json() -> format: "json") */
+  
   format?: ResponseFormat;
-  /** request body */
+  
   body?: unknown;
-  /** base url */
+  
   baseUrl?: string;
-  /** request cancellation token */
+  
   cancelToken?: CancelToken;
 }
 
@@ -294,3 +294,4 @@ export class HttpClient<SecurityDataType = unknown> {
     }
   }
 }
+

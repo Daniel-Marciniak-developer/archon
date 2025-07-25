@@ -32,7 +32,7 @@ export function FileUploadZone({
   onUploadComplete,
   onUploadError,
   disabled = false,
-  maxSizeBytes = 100 * 1024 * 1024, // 100MB default
+  maxSizeBytes = 100 * 1024 * 1024,
   acceptedFileTypes = ['.py', '.txt', '.md', '.json', '.yaml', '.yml', '.toml', '.cfg', '.ini']
 }: FileUploadZoneProps) {
   const [isDragOver, setIsDragOver] = useState(false);
@@ -45,16 +45,13 @@ export function FileUploadZone({
     const invalid: { file: File, reason: string }[] = [];
 
     Array.from(files).forEach(file => {
-      // Check file size
       if (file.size > maxSizeBytes) {
         invalid.push({ file, reason: `File too large (max ${Math.round(maxSizeBytes / 1024 / 1024)}MB)` });
         return;
       }
 
-      // Check file type (for individual files)
       const extension = '.' + file.name.split('.').pop()?.toLowerCase();
       if (file.type !== '' && !acceptedFileTypes.includes(extension)) {
-        // Allow directories and common Python project files
         if (!file.webkitRelativePath && !['requirements.txt', 'setup.py', 'pyproject.toml', 'Pipfile', 'poetry.lock'].includes(file.name)) {
           invalid.push({ file, reason: 'Unsupported file type' });
           return;
@@ -119,7 +116,6 @@ export function FileUploadZone({
     if (files) {
       handleFileSelection(files);
     }
-    // Reset input value to allow selecting the same files again
     e.target.value = '';
   }, [handleFileSelection]);
 
@@ -135,24 +131,17 @@ export function FileUploadZone({
     onUploadStart();
 
     try {
-      // Mark all files as uploading
       setUploadedFiles(prev => prev.map(file => ({ ...file, status: 'uploading' as const })));
 
-      // Create FormData for upload
       const formData = new FormData();
 
-      // Add all files to FormData
       uploadedFiles.forEach((uploadedFile) => {
         formData.append('files', uploadedFile.file);
       });
 
-      // Generate project name from first file or timestamp
       const projectName = uploadedFiles[0]?.file.name.split('.')[0] || `project-${Date.now()}`;
       formData.append('project_name', projectName);
 
-      console.log('📤 FileUploadZone: Starting upload to backend...');
-
-      // Simulate progress updates during upload
       let currentProgress = 0;
       const progressInterval = setInterval(() => {
         currentProgress = Math.min(currentProgress + 5, 90);
@@ -161,22 +150,17 @@ export function FileUploadZone({
       }, 200);
 
       try {
-        // Call backend upload endpoint
         const response = await brain.upload_project_files(formData);
 
         clearInterval(progressInterval);
         onUploadProgress(100);
 
-        console.log('✅ FileUploadZone: Upload successful:', response);
-
-        // Mark all files as successful
         setUploadedFiles(prev => prev.map(file => ({
           ...file,
           status: 'success' as const,
           progress: 100
         })));
 
-        // Call success callback with response data
         onUploadComplete({
           id: response.project_id,
           name: response.project_name,
@@ -193,7 +177,7 @@ export function FileUploadZone({
       }
 
     } catch (error) {
-      console.error('❌ FileUploadZone: Upload failed:', error);
+
 
       let errorMessage = 'Upload failed';
       let userFriendlyMessage = '';
@@ -203,7 +187,6 @@ export function FileUploadZone({
           const errorData = await error.json();
           errorMessage = errorData.detail || `HTTP ${error.status}: ${error.statusText}`;
 
-          // Provide user-friendly messages for common errors
           if (error.status === 413) {
             userFriendlyMessage = 'Files are too large. Please reduce file size or number of files.';
           } else if (error.status === 400) {
@@ -222,7 +205,6 @@ export function FileUploadZone({
       } else if (error instanceof Error) {
         errorMessage = error.message;
 
-        // Handle specific error types
         if (error.message.includes('NetworkError') || error.message.includes('fetch')) {
           userFriendlyMessage = 'Network error. Please check your internet connection.';
         } else if (error.message.includes('timeout')) {
@@ -230,10 +212,8 @@ export function FileUploadZone({
         }
       }
 
-      // Use user-friendly message if available, otherwise use technical message
       const displayMessage = userFriendlyMessage || errorMessage;
 
-      // Mark all files as failed
       setUploadedFiles(prev => prev.map(file => ({
         ...file,
         status: 'error' as const,
@@ -271,7 +251,7 @@ export function FileUploadZone({
 
   return (
     <div className="space-y-4">
-      {/* Drop Zone */}
+      {}
       <Card
         className={cn(
           "crystal-upload-zone cursor-pointer",
@@ -329,7 +309,7 @@ export function FileUploadZone({
         </CardContent>
       </Card>
 
-      {/* File List */}
+      {}
       {uploadedFiles.length > 0 && (
         <Card className="crystal-card">
           <CardContent className="p-4">
@@ -402,3 +382,4 @@ export function FileUploadZone({
     </div>
   );
 }
+

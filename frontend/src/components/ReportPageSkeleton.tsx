@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card";
 const ReportPageSkeleton = () => {
   return (
     <div className="space-y-8">
-      {/* Header with overall score */}
+      {}
       <Card className="border-white/10 bg-[#17171A]">
         <CardContent className="pt-6">
           <div className="flex items-center justify-between">
@@ -23,7 +23,7 @@ const ReportPageSkeleton = () => {
         </CardContent>
       </Card>
 
-      {/* Category Scores */}
+      {}
       <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4">
         {Array.from({ length: 4 }).map((_, i) => (
           <Card key={i} className="border-white/10 bg-[#17171A]">
@@ -40,7 +40,7 @@ const ReportPageSkeleton = () => {
         ))}
       </div>
 
-      {/* Issues List */}
+      {}
       <Card className="border-white/10 bg-[#17171A]">
         <CardHeader>
           <Skeleton className="h-6 w-40 rounded" />
@@ -62,3 +62,4 @@ const ReportPageSkeleton = () => {
 };
 
 export default ReportPageSkeleton;
+

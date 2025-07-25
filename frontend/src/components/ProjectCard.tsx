@@ -65,27 +65,27 @@ export function ProjectCard({ project, onProjectDeleted }: Props) {
   const chartData = [{ name: 'score', value: score ?? 0, fill: color }];
 
   const handleDeleteProject = async () => {
-    console.log('🗑️ ProjectCard: Starting delete for project', { id: project.id, name: project.repo_name });
+
 
     if (!user) {
-      console.log('❌ ProjectCard: No user available');
+
       return;
     }
 
     setIsDeleting(true);
     try {
-      // Pobierz token asynchronicznie
-      console.log('🔑 ProjectCard: Getting auth token...');
+
+
       const authJson = await user.getAuthJson();
       const accessToken = authJson.accessToken;
 
       if (!accessToken) {
-        console.log('❌ ProjectCard: No access token available');
+
         throw new Error('Brak tokenu autoryzacji');
       }
 
-      console.log('✅ ProjectCard: Access token obtained');
-      console.log('📡 ProjectCard: Sending DELETE request to backend');
+
+
       const response = await fetch(`/routes/projects/${project.id}`, {
         method: 'DELETE',
         headers: {
@@ -94,34 +94,34 @@ export function ProjectCard({ project, onProjectDeleted }: Props) {
         },
       });
 
-      console.log('📡 ProjectCard: DELETE response received', { status: response.status, ok: response.ok });
+
 
       if (!response.ok) {
         const errorText = await response.text();
-        console.log('❌ ProjectCard: DELETE failed', { status: response.status, error: errorText });
+
         throw new Error(`Failed to delete project: ${response.status}`);
       }
 
       const result = await response.json();
-      console.log('✅ ProjectCard: Project deleted successfully', result);
+
       toast.success(`Project ${result.project_name} deleted successfully`);
 
-      console.log('🔄 ProjectCard: Calling onProjectDeleted callback');
+
       if (onProjectDeleted) {
         onProjectDeleted();
       }
     } catch (error) {
-      console.error('❌ ProjectCard: Error deleting project:', error);
+
       toast.error(error instanceof Error ? error.message : 'Failed to delete project');
     } finally {
-      console.log('🏁 ProjectCard: Delete operation completed');
+
       setIsDeleting(false);
       setIsDeleteDialogOpen(false);
     }
   };
 
   const handleCardClick = (e: React.MouseEvent) => {
-    // Prevent navigation when clicking on dropdown or buttons
+
     if ((e.target as HTMLElement).closest('[data-dropdown-trigger]') ||
         (e.target as HTMLElement).closest('button')) {
       return;
@@ -165,7 +165,7 @@ export function ProjectCard({ project, onProjectDeleted }: Props) {
                 )}
               </Badge>
 
-              {/* Dropdown menu for actions */}
+              {}
               <DropdownMenu>
                 <DropdownMenuTrigger asChild data-dropdown-trigger>
                   <Button
@@ -262,7 +262,7 @@ export function ProjectCard({ project, onProjectDeleted }: Props) {
         </div>
       </Card>
 
-      {/* Delete confirmation dialog */}
+      {}
       <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
         <AlertDialogContent className="crystal-surface border-crystal-border">
           <AlertDialogHeader>
@@ -304,6 +304,7 @@ export function ProjectCard({ project, onProjectDeleted }: Props) {
     </>
   );
 }
+
 
 
 

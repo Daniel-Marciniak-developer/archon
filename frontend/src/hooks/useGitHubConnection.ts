@@ -30,7 +30,7 @@ export function useGitHubConnection() {
   const [repositoriesLoading, setRepositoriesLoading] = useState(false);
   const [hasChecked, setHasChecked] = useState(false); // Prevent multiple checks
 
-  // Check GitHub connection status when user changes
+
   useEffect(() => {
     if (!user) {
       setConnectionState({
@@ -46,12 +46,12 @@ export function useGitHubConnection() {
       return;
     }
 
-    // Only check once per user session
+
     if (hasChecked) {
       return;
     }
 
-    // Add delay to prevent rate limiting
+
     const timer = setTimeout(() => {
       checkGitHubConnection();
     }, 1000); // Increased delay
@@ -66,14 +66,13 @@ export function useGitHubConnection() {
       setHasChecked(true); // Mark as checked to prevent loops
       setConnectionState(prev => ({ ...prev, isLoading: true, error: null }));
 
-      console.log('🔗 GitHub: Checking connection via backend API');
 
-      // Use our custom backend API to check GitHub connection
+
+
       const response = await brain.get_github_connection_status();
 
       if (response.ok) {
         const data = await response.json();
-        console.log('🔗 GitHub: Backend connection status:', data);
 
         if (data.connected) {
           setConnectionState({
@@ -85,11 +84,11 @@ export function useGitHubConnection() {
               accessToken: null, // Backend doesn't return access token
             });
 
-            // Auto-fetch repositories
+
             await fetchRepositories();
             return;
         } else {
-          console.log('🔗 GitHub: Not connected via backend');
+
           setConnectionState({
             isConnected: false,
             isLoading: false,
@@ -100,7 +99,7 @@ export function useGitHubConnection() {
           });
         }
       } else {
-        console.log('🔗 GitHub: Backend status check failed');
+
         setConnectionState({
           isConnected: false,
           isLoading: false,
@@ -112,7 +111,7 @@ export function useGitHubConnection() {
       }
 
     } catch (error) {
-      console.error('❌ GitHub: Connection check failed:', error);
+
 
       setConnectionState({
         isConnected: false,
@@ -128,23 +127,23 @@ export function useGitHubConnection() {
   const fetchRepositories = async () => {
     try {
       setRepositoriesLoading(true);
-      console.log('📦 GitHub: Fetching repositories...');
+
 
       const response = await brain.get_github_repositories();
 
       if (response.ok) {
         const data = await response.json();
         setRepositories(data.repositories || []);
-        console.log(`📦 GitHub: Loaded ${data.repositories?.length || 0} repositories`);
+
       } else {
-        // Backend error - show error instead of mock data
-        console.error(`📦 GitHub: Backend error ${response.status}`);
+
+
         throw new Error(`Failed to fetch repositories: ${response.status}`);
       }
     } catch (error) {
-      console.error('❌ GitHub: Repository fetch failed:', error);
 
-      // Set empty repositories and show error
+
+
       setRepositories([]);
       toast.error(`Failed to load GitHub repositories: ${error instanceof Error ? error.message : 'Unknown error'}`);
     } finally {
@@ -154,9 +153,9 @@ export function useGitHubConnection() {
 
   const connectGitHub = async () => {
     try {
-      console.log('🔗 GitHub: Initiating connection via custom OAuth');
 
-      // Get GitHub OAuth URL from backend
+
+
       const response = await brain.connect_github();
 
       if (!response.ok) {
@@ -165,12 +164,12 @@ export function useGitHubConnection() {
 
       const data = await response.json();
 
-      // Redirect to GitHub OAuth
+
       window.location.href = data.auth_url;
 
-      console.log('🚀 GitHub: Redirecting to GitHub OAuth');
+
     } catch (error) {
-      console.error('❌ GitHub: Connection failed:', error);
+
       toast.error(`Failed to connect GitHub: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   };
@@ -187,7 +186,7 @@ export function useGitHubConnection() {
   };
 
   return {
-    // Connection state
+
     isConnected: connectionState.isConnected,
     isLoading: connectionState.isLoading,
     error: connectionState.error,
@@ -195,13 +194,14 @@ export function useGitHubConnection() {
     avatarUrl: connectionState.avatarUrl,
     accessToken: connectionState.accessToken,
     
-    // Repositories
+
     repositories,
     repositoriesLoading,
     
-    // Actions
+
     connectGitHub,
     refreshConnection,
     refreshRepositories,
   };
 }
+

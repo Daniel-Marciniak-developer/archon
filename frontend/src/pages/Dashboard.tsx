@@ -17,24 +17,24 @@ const Dashboard = () => {
   const navigate = useNavigate();
 
   const handleProjectAdded = (projectId?: number) => {
-    // Refetch projects after adding a new one
-    console.log('✅ Dashboard: Project added, refetching...');
+
+
     refetch();
     setModalOpen(false);
 
-    // If projectId is provided, redirect to RepositoryViewer
+
     if (projectId) {
-      console.log('🚀 Dashboard: Redirecting to RepositoryViewer for project:', projectId);
+
       navigate(`/projects/${projectId}/repository`);
     }
   };
 
-  console.log('📈 Dashboard: Render state', { loading, error, projectsCount: projects?.length });
+
 
 
 
   const handleAddProject = () => {
-    console.log("Add new project clicked");
+
     setModalOpen(true);
   };
 
@@ -50,7 +50,7 @@ const Dashboard = () => {
     }
 
     if (error) {
-      console.error("❌ Dashboard: Showing error state", error);
+
       return (
         <div className="flex flex-col items-center justify-center text-center py-20 bg-crystal-surface/20 rounded-lg">
           <AlertCircle className="w-12 h-12 text-crystal-critical" />
@@ -69,7 +69,7 @@ const Dashboard = () => {
     }
 
     if (projects.length === 0) {
-      console.log("🧘 Dashboard: Showing empty state");
+
       return (
         <div className="text-center py-20 bg-crystal-surface/20 rounded-lg">
           <h2 className="text-2xl font-bold text-crystal-text-primary">No Projects Yet</h2>
@@ -80,7 +80,7 @@ const Dashboard = () => {
       );
     }
 
-    console.log(`✅ Dashboard: Rendering main content with ${projects.length} projects`);
+
     return (
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {projects.map((project) => (
@@ -88,7 +88,7 @@ const Dashboard = () => {
             key={project.id}
             project={project}
             onProjectDeleted={() => {
-              console.log('🗑️ Dashboard: Project deleted, refetching...');
+
               refetch();
             }}
           />
@@ -126,6 +126,7 @@ const Dashboard = () => {
 }
 
 export default Dashboard;
+
 
 
 

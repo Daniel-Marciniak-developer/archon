@@ -15,12 +15,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { FileTreeProps, FileNode, FileTreeItem } from './types';
 
-/**
- * FileTree - Komponent drzewa plików z wirtualizacją
- * 
- * Renderuje rekursywnie strukturę plików z checkboxami, obsługuje zwijanie/rozwijanie
- * folderów oraz wirtualizację dla wydajności przy dużych repozytoriach.
- */
+
 export const FileTree: React.FC<FileTreeProps> = React.memo(({
   fileTree,
   selectedFile,
@@ -29,11 +24,28 @@ export const FileTree: React.FC<FileTreeProps> = React.memo(({
   onFilesForAnalysisChange,
 }) => {
   const [expandedFolders, setExpandedFolders] = useState<Set<string>>(new Set());
+
+
+  useEffect(() => {
+    if (fileTree.length > 0 && expandedFolders.size === 0) {
+      const autoExpandFolders = new Set<string>();
+
+
+      fileTree.forEach(item => {
+        if (item.type === 'folder') {
+          autoExpandFolders.add(item.path);
+        }
+      });
+
+
+      setExpandedFolders(autoExpandFolders);
+    }
+  }, [fileTree, expandedFolders.size]);
   const [focusedIndex, setFocusedIndex] = useState<number>(-1);
   const listRef = useRef<List>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
-  // Funkcja do uzyskania ikony pliku na podstawie rozszerzenia
+
   const getFileIcon = useCallback((fileName: string) => {
     const extension = fileName.split('.').pop()?.toLowerCase();
     
@@ -76,7 +88,7 @@ export const FileTree: React.FC<FileTreeProps> = React.memo(({
     }
   }, []);
 
-  // Funkcja do przełączania stanu rozwinięcia folderu
+
   const toggleFolder = useCallback((folderPath: string) => {
     setExpandedFolders(prev => {
       const newSet = new Set(prev);
@@ -89,7 +101,7 @@ export const FileTree: React.FC<FileTreeProps> = React.memo(({
     });
   }, []);
 
-  // Funkcja do zbierania wszystkich ścieżek plików w folderze (rekursywnie)
+
   const collectFilePaths = useCallback((node: FileNode): string[] => {
     if (node.type === 'file') {
       return [node.path];
@@ -102,28 +114,28 @@ export const FileTree: React.FC<FileTreeProps> = React.memo(({
     return [];
   }, []);
 
-  // Funkcja do obsługi zmiany stanu checkbox
+
   const handleCheckboxChange = useCallback((node: FileNode, checked: boolean) => {
     const filePaths = collectFilePaths(node);
     
     if (checked) {
-      // Dodaj wszystkie pliki z tego węzła
+
       const newFilesForAnalysis = [...new Set([...filesForAnalysis, ...filePaths])];
       onFilesForAnalysisChange(newFilesForAnalysis);
     } else {
-      // Usuń wszystkie pliki z tego węzła
+
       const newFilesForAnalysis = filesForAnalysis.filter(path => !filePaths.includes(path));
       onFilesForAnalysisChange(newFilesForAnalysis);
     }
   }, [filesForAnalysis, onFilesForAnalysisChange, collectFilePaths]);
 
-  // Funkcja do sprawdzenia czy węzeł jest zaznaczony
+
   const isNodeChecked = useCallback((node: FileNode): boolean => {
     const filePaths = collectFilePaths(node);
     return filePaths.length > 0 && filePaths.every(path => filesForAnalysis.includes(path));
   }, [filesForAnalysis, collectFilePaths]);
 
-  // Funkcja do sprawdzenia czy węzeł jest częściowo zaznaczony
+
   const isNodeIndeterminate = useCallback((node: FileNode): boolean => {
     if (node.type === 'file') return false;
     
@@ -133,7 +145,7 @@ export const FileTree: React.FC<FileTreeProps> = React.memo(({
     return checkedPaths.length > 0 && checkedPaths.length < filePaths.length;
   }, [filesForAnalysis, collectFilePaths]);
 
-  // Funkcja do spłaszczenia drzewa plików do listy z poziomami
+
   const flattenTree = useCallback((
     nodes: FileNode[], 
     level: number = 0, 
@@ -153,7 +165,7 @@ export const FileTree: React.FC<FileTreeProps> = React.memo(({
         isChecked,
       });
 
-      // Jeśli folder jest rozwinięty, dodaj jego dzieci
+
       if (node.type === 'folder' && isExpanded && node.children) {
         flattenTree(node.children, level + 1, result);
       }
@@ -162,10 +174,15 @@ export const FileTree: React.FC<FileTreeProps> = React.memo(({
     return result;
   }, [expandedFolders, selectedFile, isNodeChecked]);
 
-  // Spłaszczona lista elementów do wyświetlenia
-  const flatItems = useMemo(() => flattenTree(fileTree), [flattenTree, fileTree]);
 
-  // Obsługa klawiatury dla accessibility
+  const flatItems = useMemo(() => {
+    const items = flattenTree(fileTree);
+
+
+    return items;
+  }, [flattenTree, fileTree, expandedFolders]);
+
+
   const handleKeyDown = useCallback((event: React.KeyboardEvent) => {
     if (flatItems.length === 0) return;
 
@@ -219,14 +236,14 @@ export const FileTree: React.FC<FileTreeProps> = React.memo(({
     }
   }, [flatItems, focusedIndex, toggleFolder, onFileSelect]);
 
-  // Efekt do przewijania do fokusowanego elementu
+
   useEffect(() => {
     if (focusedIndex >= 0 && listRef.current) {
       listRef.current.scrollToItem(focusedIndex, 'smart');
     }
   }, [focusedIndex]);
 
-  // Komponent pojedynczego elementu w liście - zoptymalizowany z React.memo
+
   const TreeItem: React.FC<{ index: number; style: React.CSSProperties }> = React.memo(({
     index,
     style
@@ -263,7 +280,7 @@ export const FileTree: React.FC<FileTreeProps> = React.memo(({
             }
           }}
         >
-          {/* Checkbox */}
+          {}
           <Checkbox
             checked={item.isChecked}
             ref={(ref) => {
@@ -276,7 +293,7 @@ export const FileTree: React.FC<FileTreeProps> = React.memo(({
             aria-label={`${item.isChecked ? 'Odznacz' : 'Zaznacz'} ${item.name}`}
           />
 
-          {/* Ikona rozwijania dla folderów */}
+          {}
           {item.type === 'folder' && item.hasChildren && (
             <button
               onClick={() => toggleFolder(item.path)}
@@ -291,7 +308,7 @@ export const FileTree: React.FC<FileTreeProps> = React.memo(({
             </button>
           )}
 
-          {/* Ikona pliku/folderu */}
+          {}
           <IconComponent 
             className={`w-4 h-4 mr-2 flex-shrink-0 ${
               item.type === 'folder' 
@@ -300,7 +317,7 @@ export const FileTree: React.FC<FileTreeProps> = React.memo(({
             }`} 
           />
 
-          {/* Nazwa pliku/folderu */}
+          {}
           <span
             onClick={() => item.type === 'file' && onFileSelect(item)}
             className={`
@@ -316,7 +333,7 @@ export const FileTree: React.FC<FileTreeProps> = React.memo(({
       </div>
     );
   }, (prevProps, nextProps) => {
-    // Optymalizacja porównania dla React.memo
+
     return prevProps.index === nextProps.index &&
            JSON.stringify(prevProps.style) === JSON.stringify(nextProps.style);
   });
@@ -361,3 +378,4 @@ export const FileTree: React.FC<FileTreeProps> = React.memo(({
 FileTree.displayName = 'FileTree';
 
 export default FileTree;
+

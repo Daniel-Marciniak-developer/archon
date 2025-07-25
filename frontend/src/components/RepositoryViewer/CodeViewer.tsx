@@ -1,24 +1,16 @@
-import React, { useMemo } from 'react';
-import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
-import { atomDark } from 'react-syntax-highlighter/dist/esm/styles/prism';
+import React, { useMemo, useEffect, useRef } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { AlertCircle, FileText, Code } from 'lucide-react';
 import { CodeViewerProps } from './types';
 
-/**
- * CodeViewer - Komponent do wyświetlania zawartości plików
- * 
- * Wyświetla sformatowany kod z podświetlaniem składni używając react-syntax-highlighter
- * z motywem atomDark. Obsługuje stany ładowania, błędu i domyślny.
- */
+
 export const CodeViewer: React.FC<CodeViewerProps> = React.memo(({
   selectedFile,
   isContentLoading,
   contentError,
   fileContent,
 }) => {
-  // Funkcja do określenia języka na podstawie rozszerzenia pliku
   const getLanguageFromFileName = useMemo(() => {
     if (!selectedFile) return 'text';
     
@@ -64,7 +56,7 @@ export const CodeViewer: React.FC<CodeViewerProps> = React.memo(({
     return languageMap[extension || ''] || 'text';
   }, [selectedFile]);
 
-  // Komponent stanu ładowania
+
   const LoadingState = () => (
     <div className="space-y-3 p-6">
       <div className="flex items-center space-x-2 mb-4">
@@ -81,7 +73,7 @@ export const CodeViewer: React.FC<CodeViewerProps> = React.memo(({
     </div>
   );
 
-  // Komponent stanu błędu
+
   const ErrorState = () => (
     <div className="flex flex-col items-center justify-center p-12 text-center">
       <AlertCircle className="w-16 h-16 text-crystal-critical mb-4" />
@@ -94,7 +86,7 @@ export const CodeViewer: React.FC<CodeViewerProps> = React.memo(({
     </div>
   );
 
-  // Komponent stanu domyślnego (brak wybranego pliku)
+
   const DefaultState = () => (
     <div className="flex flex-col items-center justify-center p-12 text-center">
       <Code className="w-16 h-16 text-crystal-text-secondary mb-4" />
@@ -107,13 +99,13 @@ export const CodeViewer: React.FC<CodeViewerProps> = React.memo(({
     </div>
   );
 
-  // Komponent wyświetlający kod
+
   const CodeContent = () => {
     if (!fileContent || !selectedFile) return null;
 
     return (
       <div className="relative">
-        {/* Nagłówek z nazwą pliku */}
+        {}
         <div className="flex items-center space-x-2 p-4 border-b border-crystal-border bg-crystal-surface/30">
           <FileText className="w-4 h-4 text-crystal-electric" />
           <span className="text-sm font-medium text-crystal-text-primary">
@@ -124,41 +116,19 @@ export const CodeViewer: React.FC<CodeViewerProps> = React.memo(({
           </span>
         </div>
 
-        {/* Zawartość kodu */}
+        {}
         <div className="overflow-auto max-h-96">
-          <SyntaxHighlighter
-            language={getLanguageFromFileName}
-            style={atomDark}
-            showLineNumbers={true}
-            lineNumberStyle={{
-              color: 'hsl(var(--crystal-text-secondary))',
-              fontSize: '0.75rem',
-              paddingRight: '1rem',
-              minWidth: '3rem',
-              textAlign: 'right',
-            }}
-            customStyle={{
-              margin: 0,
-              padding: '1rem',
-              background: 'transparent',
-              fontSize: '0.875rem',
-              lineHeight: '1.5',
-            }}
-            codeTagProps={{
-              style: {
-                fontFamily: '"Fira Code", Consolas, "Courier New", monospace',
-                fontSize: '0.875rem',
-              }
-            }}
-          >
-            {fileContent}
-          </SyntaxHighlighter>
+          <pre className="m-0 p-4 bg-slate-900 text-slate-100 text-sm leading-relaxed font-mono rounded border">
+            <code className="block whitespace-pre-wrap break-words">
+              {fileContent}
+            </code>
+          </pre>
         </div>
       </div>
     );
   };
 
-  // Renderowanie głównego komponentu
+
   const renderContent = () => {
     if (contentError) {
       return <ErrorState />;
@@ -197,3 +167,4 @@ export const CodeViewer: React.FC<CodeViewerProps> = React.memo(({
 CodeViewer.displayName = 'CodeViewer';
 
 export default CodeViewer;
+

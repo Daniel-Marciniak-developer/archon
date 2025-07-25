@@ -21,18 +21,13 @@ interface RepositoryData {
   fileTree: FileNode[];
 }
 
-/**
- * RepositoryViewerPage - Strona do przeglądania repozytorium
- * 
- * Integruje komponent RepositoryViewer z API backendu i routingiem.
- * Obsługuje pobieranie danych z GitHub API przez backend.
- */
+
 export const RepositoryViewerPage: React.FC = () => {
   const { projectId } = useParams<{ projectId: string }>();
   const navigate = useNavigate();
   const rawUser = useUser();
 
-  // Stabilize user object to prevent infinite re-renders
+
   const user = useMemo(() => rawUser, [rawUser?.id || null]);
 
 
@@ -43,7 +38,7 @@ export const RepositoryViewerPage: React.FC = () => {
   const [currentBranch, setCurrentBranch] = useState('main');
   const [hasInitialized, setHasInitialized] = useState(false);
 
-  // Funkcja do pobierania danych repozytorium
+
   const fetchRepositoryData = useCallback(async (branch: string = 'main') => {
     if (!projectId || !user) {
       return;
@@ -60,6 +55,24 @@ export const RepositoryViewerPage: React.FC = () => {
       }
 
       const data = response.data;
+
+
+      const countFiles = (tree: FileNode[]): number => {
+        let count = 0;
+        for (const item of tree) {
+          if (item.type === 'file') {
+            count++;
+          } else if (item.type === 'folder' && item.children) {
+            count += countFiles(item.children);
+          }
+        }
+        return count;
+      };
+
+      const fileCount = countFiles(data.fileTree);
+
+
+
       setRepositoryData(data);
       setCurrentBranch(branch);
       setHasInitialized(true);
@@ -70,7 +83,7 @@ export const RepositoryViewerPage: React.FC = () => {
     }
   }, [projectId, user]);
 
-  // Funkcja do pobierania zawartości pliku
+
   const handleFetchFileContent = useCallback(async (filePath: string): Promise<string> => {
     if (!projectId || !user) {
       throw new Error('Brak autoryzacji');
@@ -89,43 +102,43 @@ export const RepositoryViewerPage: React.FC = () => {
 
       return response.data.content;
     } catch (error) {
-      console.error('Error fetching file content:', error);
+
       throw error;
     }
   }, [projectId, user, currentBranch]);
 
-  // Funkcja do zmiany gałęzi
+
   const handleBranchChange = useCallback((newBranch: string) => {
     fetchRepositoryData(newBranch);
   }, [fetchRepositoryData]);
 
-  // Funkcja do rozpoczęcia analizy
+
   const handleAnalyzeRequest = useCallback(async (selectedFilePaths: string[]) => {
     if (!projectId || !user) return;
 
     try {
       const response = await brain.start_analysis({ projectId: parseInt(projectId) });
 
-      // Przekieruj do strony z wynikami analizy
+
       navigate(`/projects/${projectId}/report`);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Błąd rozpoczęcia analizy');
     }
   }, [projectId, user, navigate]);
 
-  // Efekt do pobierania danych przy załadowaniu strony
+
   useEffect(() => {
     if (projectId && user && !hasInitialized) {
       fetchRepositoryData();
     }
   }, [projectId, user, fetchRepositoryData]);
 
-  // Komponent ładowania
+
   if (isLoading) {
     return (
       <div className="min-h-screen bg-crystal-void p-6">
         <div className="max-w-7xl mx-auto space-y-6">
-          {/* Nagłówek z przyciskiem powrotu */}
+          {}
           <div className="flex items-center space-x-4">
             <Button
               variant="outline"
@@ -138,7 +151,7 @@ export const RepositoryViewerPage: React.FC = () => {
             <Skeleton className="h-8 w-64" />
           </div>
 
-          {/* Skeleton dla RepositoryViewer */}
+          {}
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
             <div className="lg:col-span-3">
               <Card className="crystal-glass border-crystal-border h-96">
@@ -177,7 +190,7 @@ export const RepositoryViewerPage: React.FC = () => {
     );
   }
 
-  // Komponent błędu
+
   if (error) {
     return (
       <div className="min-h-screen bg-crystal-void p-6">
@@ -224,14 +237,14 @@ export const RepositoryViewerPage: React.FC = () => {
     );
   }
 
-  // Główny komponent z RepositoryViewer
+
   if (!repositoryData) {
     return null;
   }
 
   return (
     <div className="min-h-screen bg-crystal-void">
-      {/* Nagłówek z przyciskiem powrotu */}
+      {}
       <div className="p-6 border-b border-crystal-border">
         <div className="max-w-7xl mx-auto">
           <Button
@@ -245,7 +258,7 @@ export const RepositoryViewerPage: React.FC = () => {
         </div>
       </div>
 
-      {/* RepositoryViewer */}
+      {}
       <RepositoryViewer
         repository={repositoryData.repository}
         fileTree={repositoryData.fileTree}
@@ -258,3 +271,4 @@ export const RepositoryViewerPage: React.FC = () => {
 };
 
 export default RepositoryViewerPage;
+

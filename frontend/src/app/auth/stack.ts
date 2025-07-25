@@ -19,12 +19,12 @@ export const stackClientApp = new StackClientApp({
   }
 })
 
-// Debug URLs after creation
-console.log('🔧 Stack Auth URLs configured:');
-console.log('  handler:', stackClientApp.urls.handler);
-console.log('  home:', stackClientApp.urls.home);
-console.log('  afterSignIn:', stackClientApp.urls.afterSignIn);
-console.log('  afterSignUp:', stackClientApp.urls.afterSignUp);
-console.log('  signIn:', stackClientApp.urls.signIn);
-console.log('  signUp:', stackClientApp.urls.signUp);
+
+
+
+
+
+
+
+
 

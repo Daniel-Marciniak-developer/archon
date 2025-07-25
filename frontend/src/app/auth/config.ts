@@ -9,9 +9,9 @@ const configSchema = z.object({
 
 type StackAuthExtensionConfig = z.infer<typeof configSchema>;
 
-// This is set by vite.config.ts
 declare const __STACK_AUTH_CONFIG__: string;
 
 export const config: StackAuthExtensionConfig = configSchema.parse(
   JSON.parse(__STACK_AUTH_CONFIG__),
 );
+

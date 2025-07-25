@@ -12,9 +12,7 @@ const UserGuardContext = createContext<UserGuardContextType | undefined>(
   undefined,
 );
 
-/**
- * Hook to access the logged in user from within a <UserGuard> component.
- */
+
 export const useUserGuardContext = () => {
   const context = useContext(UserGuardContext);
 
@@ -39,23 +37,18 @@ export const UserGuard = (props: {
   const rawUser = useUser()
   const [isInitialLoad, setIsInitialLoad] = useState(true)
 
-  // Stabilize user object to prevent infinite re-renders
   const user = useMemo(() => rawUser, [rawUser?.id || null]);
 
   const { pathname } = useLocation();
 
-  // Give Stack Auth time to load user state on initial load
   useEffect(() => {
     const timer = setTimeout(() => {
       setIsInitialLoad(false)
-    }, 500) // Wait 500ms for Stack Auth to initialize
+    }, 500)
 
     return () => clearTimeout(timer)
   }, [])
 
-
-
-  // Show loading during initial load
   if (isInitialLoad) {
     return <div>Loading...</div>
   }
@@ -63,8 +56,6 @@ export const UserGuard = (props: {
   if (!user) {
     const queryParams = new URLSearchParams(window.location.search);
 
-    // Don't set the next param if the user is logging out or on home page
-    // to avoid ending up in an infinite redirect loop
     if (pathname !== app.urls.signOut && pathname !== '/' && pathname !== '/dashboard') {
       writeToLocalStorage('dtbn-login-next', pathname);
       queryParams.set("next", pathname);
@@ -81,3 +72,4 @@ export const UserGuard = (props: {
     </UserGuardContext.Provider>
   );
 };
+

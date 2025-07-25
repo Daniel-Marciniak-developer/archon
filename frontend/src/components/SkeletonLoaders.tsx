@@ -24,3 +24,4 @@ const ProjectCardSkeleton = () => (
 );
 
 export { Skeleton, ProjectCardSkeleton };
+

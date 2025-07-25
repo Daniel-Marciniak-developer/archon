@@ -7,12 +7,7 @@ import { FileTree } from './FileTree';
 import { CodeViewer } from './CodeViewer';
 import { RepositoryViewerProps, FileNode, RepositoryViewerState } from './types';
 
-/**
- * RepositoryViewer - Główny komponent do przeglądania repozytorium
- * 
- * Orkiestruje trzykolumnowy layout z nagłówkiem repozytorium, drzewem plików,
- * podglądem kodu i przyciskiem analizy. Zarządza stanem globalnym dla całego widoku.
- */
+
 export const RepositoryViewer: React.FC<RepositoryViewerProps> = ({
   repository,
   fileTree,
@@ -20,7 +15,7 @@ export const RepositoryViewer: React.FC<RepositoryViewerProps> = ({
   onBranchChange,
   onAnalyzeRequest,
 }) => {
-  // Stan komponentu
+
   const [state, setState] = useState<RepositoryViewerState>({
     selectedFile: null,
     filesForAnalysis: [],
@@ -29,7 +24,7 @@ export const RepositoryViewer: React.FC<RepositoryViewerProps> = ({
     fileContent: null,
   });
 
-  // Callback do wyboru pliku
+
   const handleFileSelect = useCallback(async (file: FileNode) => {
     if (file.type !== 'file') return;
 
@@ -57,7 +52,7 @@ export const RepositoryViewer: React.FC<RepositoryViewerProps> = ({
     }
   }, [onFetchFileContent]);
 
-  // Callback do zmiany listy plików do analizy
+
   const handleFilesForAnalysisChange = useCallback((filePaths: string[]) => {
     setState(prev => ({
       ...prev,
@@ -65,14 +60,14 @@ export const RepositoryViewer: React.FC<RepositoryViewerProps> = ({
     }));
   }, []);
 
-  // Callback do rozpoczęcia analizy
+
   const handleAnalyzeRequest = useCallback(() => {
     onAnalyzeRequest(state.filesForAnalysis);
   }, [onAnalyzeRequest, state.filesForAnalysis]);
 
-  // Callback do zmiany gałęzi
+
   const handleBranchChange = useCallback((newBranch: string) => {
-    // Resetuj stan przy zmianie gałęzi
+
     setState({
       selectedFile: null,
       filesForAnalysis: [],
@@ -84,7 +79,7 @@ export const RepositoryViewer: React.FC<RepositoryViewerProps> = ({
     onBranchChange(newBranch);
   }, [onBranchChange]);
 
-  // Efekt do resetowania stanu przy zmianie drzewa plików
+
   useEffect(() => {
     setState(prev => ({
       ...prev,
@@ -98,15 +93,15 @@ export const RepositoryViewer: React.FC<RepositoryViewerProps> = ({
   return (
     <div className="min-h-screen bg-crystal-void p-6">
       <div className="max-w-7xl mx-auto space-y-6">
-        {/* Nagłówek repozytorium */}
+        {}
         <RepoHeader
           repository={repository}
           onBranchChange={handleBranchChange}
         />
 
-        {/* Główny layout - trzy kolumny */}
+        {}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 h-[calc(100vh-200px)]">
-          {/* Lewa kolumna - Drzewo plików */}
+          {}
           <div className="lg:col-span-3">
             <FileTree
               fileTree={fileTree}
@@ -117,7 +112,7 @@ export const RepositoryViewer: React.FC<RepositoryViewerProps> = ({
             />
           </div>
 
-          {/* Środkowa kolumna - Podgląd kodu */}
+          {}
           <div className="lg:col-span-6">
             <CodeViewer
               selectedFile={state.selectedFile}
@@ -127,12 +122,12 @@ export const RepositoryViewer: React.FC<RepositoryViewerProps> = ({
             />
           </div>
 
-          {/* Prawa kolumna - Panel analizy */}
+          {}
           <div className="lg:col-span-3">
             <Card className="crystal-glass border-crystal-border h-full">
               <CardContent className="p-6">
                 <div className="space-y-6">
-                  {/* Sekcja wybranych plików */}
+                  {}
                   <div>
                     <h3 className="text-lg font-semibold text-crystal-text-primary mb-4 flex items-center">
                       <FileCheck className="w-5 h-5 mr-2 text-crystal-electric" />
@@ -166,7 +161,7 @@ export const RepositoryViewer: React.FC<RepositoryViewerProps> = ({
                     )}
                   </div>
 
-                  {/* Przycisk analizy */}
+                  {}
                   <div className="pt-4 border-t border-crystal-border">
                     <Button
                       onClick={handleAnalyzeRequest}
@@ -184,7 +179,7 @@ export const RepositoryViewer: React.FC<RepositoryViewerProps> = ({
                     </Button>
                   </div>
 
-                  {/* Informacje dodatkowe */}
+                  {}
                   <div className="pt-4 border-t border-crystal-border">
                     <div className="space-y-2 text-xs text-crystal-text-secondary">
                       <p>
@@ -206,23 +201,12 @@ export const RepositoryViewer: React.FC<RepositoryViewerProps> = ({
           </div>
         </div>
 
-        {/* Responsywny layout dla urządzeń mobilnych */}
-        <style jsx>{`
-          @media (max-width: 1024px) {
-            .grid {
-              grid-template-columns: 1fr;
-              gap: 1rem;
-            }
-            
-            .lg\\:col-span-3,
-            .lg\\:col-span-6 {
-              grid-column: span 1;
-            }
-          }
-        `}</style>
+        {}
+
       </div>
     </div>
   );
 };
 
 export default RepositoryViewer;
+

@@ -1,5 +1,4 @@
 import { RouterProvider } from "react-router-dom";
-import { Head } from "./internal-components/Head";
 import { OuterErrorBoundary } from "./prod-components/OuterErrorBoundary";
 import { router } from "./router";
 import { ThemeProvider } from "./internal-components/ThemeProvider";
@@ -14,10 +13,10 @@ export const AppWrapper = () => {
       <StackTheme>
       <ThemeProvider defaultTheme={DEFAULT_THEME}>
         <RouterProvider router={router} />
-        <Head />
       </ThemeProvider>
       </StackTheme>
       </StackProvider>
     </OuterErrorBoundary>
   );
 };
+

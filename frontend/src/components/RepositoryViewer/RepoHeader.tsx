@@ -4,12 +4,7 @@ import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { RepoHeaderProps } from './types';
 
-/**
- * RepoHeader - Komponent wyświetlający informacje o repozytorium
- * 
- * Wyświetla nazwę repozytorium (jako link do GitHub), opis oraz selektor gałęzi.
- * Utrzymany w ciemnej estetyce Crystal theme inspirowanej VS Code.
- */
+
 export const RepoHeader: React.FC<RepoHeaderProps> = React.memo(({
   repository,
   onBranchChange,
@@ -19,7 +14,7 @@ export const RepoHeader: React.FC<RepoHeaderProps> = React.memo(({
       <CardHeader className="pb-4">
         <div className="flex items-start justify-between">
           <div className="flex-1 min-w-0">
-            {/* Nazwa repozytorium jako link */}
+            {}
             <div className="flex items-center space-x-2 mb-2">
               <h1 className="text-xl font-semibold text-crystal-text-primary truncate">
                 <a
@@ -35,7 +30,7 @@ export const RepoHeader: React.FC<RepoHeaderProps> = React.memo(({
               </h1>
             </div>
 
-            {/* Opis repozytorium */}
+            {}
             {repository.description && (
               <p className="text-crystal-text-secondary text-sm leading-relaxed">
                 {repository.description}
@@ -43,7 +38,7 @@ export const RepoHeader: React.FC<RepoHeaderProps> = React.memo(({
             )}
           </div>
 
-          {/* Selektor gałęzi */}
+          {}
           <div className="flex-shrink-0 ml-4">
             <div className="flex items-center space-x-2">
               <GitBranch className="w-4 h-4 text-crystal-text-secondary" />
@@ -80,3 +75,4 @@ export const RepoHeader: React.FC<RepoHeaderProps> = React.memo(({
 RepoHeader.displayName = 'RepoHeader';
 
 export default RepoHeader;
+

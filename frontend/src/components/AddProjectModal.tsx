@@ -39,7 +39,6 @@ interface Props {
 }
 
 export function AddProjectModal({ open, onOpenChange, onProjectAdded, existingProjects }: Props) {
-  // GitHub connection hook
   const {
     isConnected: githubConnected,
     isLoading: githubLoading,
@@ -51,21 +50,17 @@ export function AddProjectModal({ open, onOpenChange, onProjectAdded, existingPr
     refreshRepositories,
   } = useGitHubConnection();
 
-  // Local state
   const [searchTerm, setSearchTerm] = useState('');
   const [addingProjectId, setAddingProjectId] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  // File upload state
   const [activeTab, setActiveTab] = useState<'github' | 'upload'>('github');
   const [uploadProgress, setUploadProgress] = useState(0);
   const [isUploading, setIsUploading] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
 
-  // Reset state when modal closes
   React.useEffect(() => {
     if (!open) {
-      console.log('❌ AddProjectModal: Modal closed, resetting state');
       setError(null);
       setAddingProjectId(null);
       setSearchTerm('');
@@ -78,10 +73,8 @@ export function AddProjectModal({ open, onOpenChange, onProjectAdded, existingPr
 
   const handleAddProject = async (repo: GitHubRepo) => {
     try {
-      console.log('➕ AddProjectModal: Adding project:', repo.full_name);
       setAddingProjectId(repo.id);
 
-      // Validate repository for suitability
       try {
         const validationResponse = await brain.validate_github_repo(repo);
         const validation = validationResponse.validation;
@@ -99,7 +92,7 @@ export function AddProjectModal({ open, onOpenChange, onProjectAdded, existingPr
           toast.warning(`Repository validated with warnings: ${validation.warnings.join(', ')}`);
         }
       } catch (validationError) {
-        console.warn('⚠️ Repository validation failed, proceeding anyway:', validationError);
+
       }
 
       const response = await brain.create_project({
@@ -110,7 +103,6 @@ export function AddProjectModal({ open, onOpenChange, onProjectAdded, existingPr
 
       if (response.status === 409) {
         toast.error(`${repo.full_name} has already been added.`);
-        // Refresh the project list to make sure the "Added" status is up-to-date
         onProjectAdded();
         return;
       }
@@ -121,20 +113,16 @@ export function AddProjectModal({ open, onOpenChange, onProjectAdded, existingPr
       }
 
       const newProject = await response.json();
-      console.log('✅ AddProjectModal: Project added successfully:', newProject);
 
       toast.success(`${repo.full_name} imported successfully!`);
       onProjectAdded(newProject.id);
       onOpenChange(false);
     } catch (err) {
-      // Check if the error is a response and has a 409 status
       if (err instanceof Response && err.status === 409) {
         toast.error(`${repo.full_name} has already been added.`);
-        // Refresh the project list to make sure the "Added" status is up-to-date
         onProjectAdded();
       } else {
         const errorMessage = err instanceof Error ? err.message : 'An unknown error occurred';
-        console.error('❌ AddProjectModal: Failed to add project:', err);
         toast.error(`Failed to import ${repo.full_name}: ${errorMessage}`);
       }
     } finally {
@@ -142,14 +130,11 @@ export function AddProjectModal({ open, onOpenChange, onProjectAdded, existingPr
     }
   };
 
-  // File upload handlers
   const handleFilesSelected = (files: FileList) => {
-    console.log('📁 AddProjectModal: Files selected:', files.length);
     setUploadError(null);
   };
 
   const handleUploadStart = () => {
-    console.log('📤 AddProjectModal: Upload started');
     setIsUploading(true);
     setUploadProgress(0);
     setUploadError(null);
@@ -160,7 +145,6 @@ export function AddProjectModal({ open, onOpenChange, onProjectAdded, existingPr
   };
 
   const handleUploadComplete = (projectData: any) => {
-    console.log('✅ AddProjectModal: Upload completed:', projectData);
     setIsUploading(false);
     setUploadProgress(100);
     toast.success('Project uploaded successfully!');
@@ -169,7 +153,6 @@ export function AddProjectModal({ open, onOpenChange, onProjectAdded, existingPr
   };
 
   const handleUploadError = (error: string) => {
-    console.error('❌ AddProjectModal: Upload error:', error);
     setIsUploading(false);
     setUploadError(error);
     toast.error(`Upload failed: ${error}`);
@@ -179,22 +162,12 @@ export function AddProjectModal({ open, onOpenChange, onProjectAdded, existingPr
     return existingProjects.some(p => p.repo_name === repo.name && p.repo_owner === repo.owner.login);
   };
 
-  // Filter repositories based on search and Python language
   const filteredRepositories = repositories.filter(repo => {
     const matchesSearch = searchTerm === '' ||
       repo.full_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       (repo.description && repo.description.toLowerCase().includes(searchTerm.toLowerCase()));
 
     return matchesSearch;
-  });
-
-  console.log('🔍 AddProjectModal: Filtering results:', {
-    totalRepos: repositories.length,
-    filteredRepos: filteredRepositories.length,
-    searchTerm,
-    githubConnected,
-    loading: repositoriesLoading,
-    error: error ? error.substring(0, 50) : null
   });
 
   return (
@@ -222,7 +195,7 @@ export function AddProjectModal({ open, onOpenChange, onProjectAdded, existingPr
           </TabsList>
 
           <TabsContent value="github" className="space-y-4 mt-4">
-            {/* GitHub Not Connected State */}
+            {}
             {githubConnected === false && (
               <Card className="crystal-card crystal-border-electric bg-crystal-electric/5">
                 <CardContent className="pt-6">
@@ -247,10 +220,8 @@ export function AddProjectModal({ open, onOpenChange, onProjectAdded, existingPr
               </Card>
             )}
 
-          {/* GitHub Connected - Show Repository Selection */}
           {githubConnected === true && (
             <>
-              {/* Search */}
               <div className="relative">
                 <Search className="absolute left-3 top-3 h-4 w-4 crystal-text-secondary" />
                 <Input
@@ -261,7 +232,6 @@ export function AddProjectModal({ open, onOpenChange, onProjectAdded, existingPr
                 />
               </div>
 
-              {/* Error State */}
               {error && (
                 <Card className="border-crystal-critical bg-crystal-critical/5">
                   <CardContent className="pt-6">
@@ -280,7 +250,6 @@ export function AddProjectModal({ open, onOpenChange, onProjectAdded, existingPr
                 </Card>
               )}
 
-              {/* Loading State */}
               {repositoriesLoading && (
                 <div className="space-y-4">
                   {[...Array(3)].map((_, i) => (
@@ -300,7 +269,6 @@ export function AddProjectModal({ open, onOpenChange, onProjectAdded, existingPr
                 </div>
               )}
 
-              {/* Repositories List */}
               {!repositoriesLoading && !error && (
                 <div className="max-h-96 overflow-y-auto space-y-3">
                   {filteredRepositories.length === 0 ? (
@@ -416,8 +384,7 @@ export function AddProjectModal({ open, onOpenChange, onProjectAdded, existingPr
               )}
             </>
           )}
-          
-            {/* Loading GitHub Connection Status */}
+
             {githubLoading && (
               <div className="text-center py-8">
                 <Skeleton className="h-8 w-48 mx-auto bg-crystal-surface" />
@@ -487,8 +454,5 @@ export function AddProjectModal({ open, onOpenChange, onProjectAdded, existingPr
     </Dialog>
   );
 }
-
-
-
 
 

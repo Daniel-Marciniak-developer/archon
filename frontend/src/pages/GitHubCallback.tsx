@@ -12,7 +12,7 @@ export default function GitHubCallback() {
   const [hasProcessed, setHasProcessed] = useState(false); // Prevent double processing
 
   useEffect(() => {
-    // Prevent double processing in React Strict Mode
+
     if (hasProcessed) {
       return;
     }
@@ -32,10 +32,10 @@ export default function GitHubCallback() {
           throw new Error('No authorization code received from GitHub');
         }
 
-        console.log('🔗 GitHub: Processing OAuth callback with code:', code);
+
         setMessage('Exchanging authorization code for access token...');
 
-        // Send code to backend to exchange for access token
+
         const response = await brain.github_oauth_callback({
           code,
           state: state || undefined
@@ -47,26 +47,26 @@ export default function GitHubCallback() {
         }
 
         const data = await response.json();
-        console.log('✅ GitHub: Authentication successful:', data);
+
 
         setStatus('success');
         setMessage(`Successfully connected GitHub account: ${data.github_username}`);
         
         toast.success(`GitHub account connected: ${data.github_username}`);
 
-        // Redirect to dashboard after short delay
+
         setTimeout(() => {
           navigate('/dashboard', { replace: true });
         }, 2000);
 
       } catch (error) {
-        console.error('❌ GitHub: Callback error:', error);
+
         setStatus('error');
         setMessage(error instanceof Error ? error.message : 'Unknown error occurred');
         
         toast.error(`GitHub connection failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
 
-        // Redirect to dashboard after delay even on error
+
         setTimeout(() => {
           navigate('/dashboard', { replace: true });
         }, 3000);
@@ -123,3 +123,4 @@ export default function GitHubCallback() {
     </div>
   );
 }
+

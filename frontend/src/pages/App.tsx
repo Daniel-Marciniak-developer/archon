@@ -10,17 +10,17 @@ export default function App() {
 const user = useUser();
   const navigate = useNavigate();
 
-  // Debug logging
-  console.log('🏠 App: Current user state:', user ? 'LOGGED IN' : 'LOGGED OUT');
-  console.log('🏠 App: User details:', user);
+
+
+
 
   const handleGetStarted = async () => {
     if (user) {
-      // User is already logged in, go to dashboard
+
       navigate("/dashboard");
     } else {
-      // User is not logged in, redirect to Stack Auth sign-in page with prompt=login
-      // This will force showing the login screen even if there's a session
+
+
       const signInUrl = new URL(stackClientApp.urls.signIn, window.location.origin);
       signInUrl.searchParams.set('prompt', 'login');
       window.location.href = signInUrl.toString();
@@ -29,7 +29,7 @@ const user = useUser();
 
   return (
     <div className="min-h-screen" style={{ backgroundColor: "hsl(var(--crystal-void))" }}>
-      {/* Navigation */}
+      {}
       <nav className="w-full p-6">
         <div className="container mx-auto flex justify-between items-center">
           <div className="flex items-center space-x-2">
@@ -50,13 +50,13 @@ const user = useUser();
         </div>
       </nav>
 
-      {/* Hero Section */}
+      {}
       <main className="container mx-auto px-4 py-20">
         <div className="max-w-4xl mx-auto text-center">
-          {/* Main Headline */}
+          {}
           <div className="mb-8">
             <h1 className="text-5xl md:text-6xl font-bold mb-6 leading-tight">
-              AI-Powered Code Analysis for
+              Advanced Code Analysis for
               <span className="crystal-electric"> Python Projects</span>
             </h1>
             <p className="text-xl" style={{ color: "hsl(var(--crystal-text-secondary))" }}>
@@ -65,7 +65,7 @@ const user = useUser();
             </p>
           </div>
 
-          {/* CTA Button */}
+          {}
           <div className="mb-16">
             <Button
               onClick={handleGetStarted}
@@ -80,7 +80,7 @@ const user = useUser();
             </p>
           </div>
 
-          {/* Feature Cards */}
+          {}
           <div className="grid md:grid-cols-3 gap-6 max-w-5xl mx-auto">
             <Card className="crystal-glass p-6 rounded-lg border-crystal-border">
               <div className="flex items-center justify-center w-12 h-12 crystal-electric mb-4 mx-auto">
@@ -115,7 +115,7 @@ const user = useUser();
         </div>
       </main>
 
-      {/* Footer */}
+      {}
       <footer className="container mx-auto px-4 py-8 mt-20">
         <div className="text-center" style={{ color: "hsl(var(--crystal-text-secondary))" }}>
           <p>&copy; 2024 Archon. Elevate your Python code quality.</p>
@@ -124,5 +124,6 @@ const user = useUser();
     </div>
   );
 }
+
 
 

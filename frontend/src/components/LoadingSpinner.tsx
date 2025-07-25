@@ -89,3 +89,4 @@ export function PulsingDots({ className }: PulsingDotsProps) {
     </div>
   );
 }
+

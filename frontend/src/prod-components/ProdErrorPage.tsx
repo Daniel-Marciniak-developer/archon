@@ -41,3 +41,4 @@ export const ProdErrorPage = ({ text, canRefresh }: Props) => {
     </div>
   );
 };
+

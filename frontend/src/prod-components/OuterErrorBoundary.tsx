@@ -10,10 +10,11 @@ export const OuterErrorBoundary = ({ children }: Props) => {
     <ErrorBoundary
       fallback={null}
       onError={(error) => {
-        console.error("Caught error in AppWrapper", error.message, error.stack);
+
       }}
     >
       {children}
     </ErrorBoundary>
   );
 };
+

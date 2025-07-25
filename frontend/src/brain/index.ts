@@ -7,17 +7,14 @@ const isLocalhost = /localhost:\d{4}/i.test(window.location.origin);
 
 const constructBaseUrl = (): string => {
   if (isLocalhost) {
-    // In workspace (dev) - use configured API_URL
     return `${API_URL}${API_PATH}`;
   }
 
   if (API_HOST && API_PREFIX_PATH) {
-    // In deployed app (prod)
     return `https://${API_HOST}${API_PREFIX_PATH}`;
   }
 
-  // In deployed app (prod)
-  return `https://api.databutton.com${API_PATH}`;
+  return `${API_URL}${API_PATH}`;
 };
 
 type BaseApiParams = Omit<RequestParams, "signal" | "baseUrl" | "cancelToken">;
@@ -37,12 +34,6 @@ const constructClient = () => {
     baseUrl,
     baseApiParams,
     customFetch: (url, options) => {
-      if (API_HOST && API_HOST !== "api.databutton.com") {
-        // Remove /routes/ segment from start of path if
-        // running API through custom domain
-        return fetch(url.replace("/api/routes/", "/api/"), options);
-      }
-
       return fetch(url, options);
     },
     securityWorker: async () => {
@@ -58,3 +49,4 @@ const constructClient = () => {
 const brain = constructClient();
 
 export default brain;
+

@@ -15,16 +15,16 @@ const ProjectReportPage = () => {
   const params = useParams();
   const navigate = useNavigate();
 
-  // Get projectId from URL params (/projects/:id/report) or search params (?projectId=1)
+
   const projectId = params.id || searchParams.get("projectId");
 
   const [report, setReport] = useState<ProjectReport | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  console.log('📊 ProjectReport: URL params:', params);
-  console.log('📊 ProjectReport: Search params:', searchParams.toString());
-  console.log('📊 ProjectReport: Project ID:', projectId);
+
+
+
 
   const handleBackToDashboard = () => {
     navigate('/dashboard');
@@ -73,7 +73,7 @@ const ProjectReportPage = () => {
   return (
     <MainLayout>
       <div className="p-8">
-        {/* Back to Dashboard Button */}
+        {}
         <div className="mb-6">
           <Button
             onClick={handleBackToDashboard}
@@ -93,6 +93,7 @@ const ProjectReportPage = () => {
 };
 
 export default ProjectReportPage;
+
 
 
 

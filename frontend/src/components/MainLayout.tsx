@@ -51,9 +51,9 @@ function UserButton() {
 
   const handleSignOut = async () => {
     try {
-      console.log('🚪 MainLayout: Starting sign out process');
 
-      // Clear ALL localStorage items that might contain auth data
+
+
       const keysToRemove = [];
       for (let i = 0; i < localStorage.length; i++) {
         const key = localStorage.key(i);
@@ -63,7 +63,7 @@ function UserButton() {
       }
       keysToRemove.forEach(key => localStorage.removeItem(key));
 
-      // Clear ALL cookies
+
       document.cookie.split(";").forEach(function(c) {
         const eqPos = c.indexOf("=");
         const name = eqPos > -1 ? c.substr(0, eqPos) : c;
@@ -72,28 +72,28 @@ function UserButton() {
         document.cookie = name + "=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/;domain=." + window.location.hostname;
       });
 
-      // Clear sessionStorage as well
+
       sessionStorage.clear();
 
-      // Sign out from Stack Auth with force
+
       await stackClientApp.signOut();
 
-      // Additional cleanup - try to invalidate any remaining sessions
+
       try {
-        // Force Stack Auth to forget the user
+
         await fetch('/api/auth/signout', { method: 'POST' }).catch(() => {});
       } catch (e) {
-        console.log('Additional signout attempt failed:', e);
+
       }
 
-      console.log('🚪 MainLayout: Sign out completed, forcing full page reload');
 
-      // Force full page reload to clear any cached state
-      // Use replace to prevent back button issues
+
+
+
       window.location.replace("/");
     } catch (error) {
-      console.error("Error during sign out:", error);
-      // Force redirect even if sign out fails
+
+
       window.location.replace("/");
     }
   };
@@ -176,10 +176,10 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="min-h-screen flex" style={{ backgroundColor: "hsl(var(--crystal-void))" }}>
-      {/* Sidebar */}
+      {}
       <aside className="w-64 flex-shrink-0 crystal-glass border-r border-crystal-border">
         <div className="flex flex-col h-full p-6">
-          {/* Logo */}
+          {}
           <div className="flex items-center space-x-3 mb-8">
             <div className="w-10 h-10 crystal-electric flex items-center justify-center rounded-lg crystal-glow">
               <Code className="w-6 h-6" />
@@ -190,7 +190,7 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
             </div>
           </div>
 
-          {/* Navigation */}
+          {}
           <nav className="flex-1 space-y-2">
             {navigationItems.map((item) => (
               <NavItem
@@ -204,17 +204,18 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
             ))}
           </nav>
 
-          {/* User Section */}
+          {}
           <div className="border-t border-crystal-border pt-4">
             <UserButton />
           </div>
         </div>
       </aside>
 
-      {/* Main Content */}
+      {}
       <main className="flex-1 overflow-y-auto">
         {children}
       </main>
     </div>
   );
 }
+

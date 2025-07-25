@@ -1,12 +1,10 @@
 import { stackClientApp } from "./stack";
 
-// Cache for auth header to prevent excessive API calls
 let authHeaderCache: { value: string; timestamp: number } | null = null;
-const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
+const CACHE_DURATION = 5 * 60 * 1000;
 
 export const auth = {
   getAuthHeaderValue: async (): Promise<string> => {
-    // Check cache first
     if (authHeaderCache && (Date.now() - authHeaderCache.timestamp) < CACHE_DURATION) {
       return authHeaderCache.value;
     }
@@ -23,7 +21,6 @@ export const auth = {
       const { accessToken } = authJson;
       const headerValue = `Bearer ${accessToken}`;
 
-      // Cache the result
       authHeaderCache = { value: headerValue, timestamp: Date.now() };
       return headerValue;
     } catch (error) {
@@ -42,3 +39,4 @@ export const auth = {
     return accessToken ?? "";
   }
 }
+

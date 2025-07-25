@@ -26,7 +26,7 @@ declare const __APP_ID__: string;
 export function ThemeProvider({
   children,
   defaultTheme = "system",
-  storageKey = `databutton-${__APP_ID__}-ui-theme`,
+  storageKey = `archon-${__APP_ID__}-ui-theme`,
   ...props
 }: ThemeProviderProps) {
   const [theme, setTheme] = useState<Theme>(
@@ -74,3 +74,4 @@ export const useTheme = () => {
 
   return context;
 };
+

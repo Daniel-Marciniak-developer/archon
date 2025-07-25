@@ -25,22 +25,22 @@ export default function Settings() {
   const [disconnecting, setDisconnecting] = useState(false);
 
   useEffect(() => {
-    console.log('⚙️ Settings: Component mounted, checking GitHub status');
+
     checkGitHubStatus();
   }, []);
 
   const checkGitHubStatus = async () => {
     try {
-      console.log('🔍 Settings: Checking GitHub connection status');
+
       setGithubStatus(prev => ({ ...prev, loading: true, error: null }));
       
       const response = await brain.get_github_connection_status();
       const data = await response.json();
       
-      console.log('✅ Settings: GitHub status received:', data);
+
       setGithubStatus({ ...data, loading: false, error: null });
     } catch (error) {
-      console.error('❌ Settings: Failed to check GitHub status:', error);
+
       setGithubStatus(prev => ({ 
         ...prev, 
         loading: false, 
@@ -52,15 +52,15 @@ export default function Settings() {
 
   const handleConnectGitHub = async () => {
     try {
-      console.log('🔗 Settings: Initiating GitHub connection via Stack Auth');
+
       setConnecting(true);
 
-      // Use Stack Auth OAuth instead of backend endpoint
+
       await stackClientApp.signInWithOAuth('github');
 
-      console.log('🚀 Settings: GitHub OAuth initiated via Stack Auth');
+
     } catch (error) {
-      console.error('❌ Settings: Failed to initiate GitHub connection:', error);
+
       toast.error(`Failed to connect to GitHub: ${error instanceof Error ? error.message : 'Unknown error'}`);
       setConnecting(false);
     }
@@ -68,7 +68,7 @@ export default function Settings() {
 
   const handleDisconnectGitHub = async () => {
     try {
-      console.log('🔌 Settings: Disconnecting GitHub account');
+
       setDisconnecting(true);
       
       const response = await brain.disconnect_github();
@@ -77,7 +77,7 @@ export default function Settings() {
         throw new Error(`HTTP ${response.status}: ${response.statusText}`);
       }
       
-      console.log('✅ Settings: GitHub account disconnected successfully');
+
       setGithubStatus({
         connected: false,
         username: null,
@@ -87,7 +87,7 @@ export default function Settings() {
       });
       toast.success('GitHub account disconnected successfully');
     } catch (error) {
-      console.error('❌ Settings: Failed to disconnect GitHub:', error);
+
       toast.error(`Failed to disconnect GitHub: ${error instanceof Error ? error.message : 'Unknown error'}`);
     } finally {
       setDisconnecting(false);
@@ -102,22 +102,22 @@ export default function Settings() {
     }
   };
 
-  // Handle GitHub OAuth callback result
+
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
     const githubConnected = urlParams.get('github_connected');
     const githubError = urlParams.get('github_error');
     
     if (githubConnected === 'true') {
-      console.log('✅ Settings: GitHub OAuth callback - connection successful');
+
       toast.success('GitHub account connected successfully!');
       checkGitHubStatus(); // Refresh status
-      // Clean up URL
+
       window.history.replaceState({}, document.title, window.location.pathname);
     } else if (githubError === 'true') {
-      console.log('❌ Settings: GitHub OAuth callback - connection failed');
+
       toast.error('Failed to connect GitHub account. Please try again.');
-      // Clean up URL
+
       window.history.replaceState({}, document.title, window.location.pathname);
     }
   }, []);
@@ -126,7 +126,7 @@ export default function Settings() {
     <MainLayout>
       <div className="flex-1 p-8">
         <div className="max-w-4xl mx-auto">
-          {/* Header */}
+          {}
           <div className="mb-8">
             <h1 className="text-3xl font-bold mb-2">Settings</h1>
             <p style={{ color: "hsl(var(--crystal-text-secondary))" }}>
@@ -135,7 +135,7 @@ export default function Settings() {
           </div>
 
           <div className="space-y-6">
-            {/* Profile Section */}
+            {}
             <Card className="crystal-glass border-crystal-border">
               <CardHeader>
                 <CardTitle className="flex items-center space-x-2">
@@ -144,7 +144,7 @@ export default function Settings() {
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-6">
-                {/* Avatar and Basic Info */}
+                {}
                 <div className="flex items-center space-x-4">
                   <Avatar className="w-20 h-20">
                     <AvatarImage src={user.profileImageUrl || undefined} />
@@ -169,7 +169,7 @@ export default function Settings() {
 
                 <Separator className="bg-crystal-border" />
 
-                {/* Profile Form */}
+                {}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="displayName">Display Name</Label>
@@ -201,7 +201,7 @@ export default function Settings() {
               </CardContent>
             </Card>
 
-            {/* Connected Accounts */}
+            {}
             <Card className="crystal-glass border-crystal-border">
               <CardHeader>
                 <CardTitle className="flex items-center space-x-2">
@@ -211,7 +211,7 @@ export default function Settings() {
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  {/* GitHub Connection */}
+                  {}
                   <div className="flex items-center justify-between p-4 rounded-lg crystal-surface">
                     <div className="flex items-center space-x-3">
                       <Github className="w-5 h-5" />
@@ -297,7 +297,7 @@ export default function Settings() {
               </CardContent>
             </Card>
 
-            {/* Security Section */}
+            {}
             <Card className="crystal-glass border-crystal-border">
               <CardHeader>
                 <CardTitle className="flex items-center space-x-2">
@@ -334,7 +334,7 @@ export default function Settings() {
               </CardContent>
             </Card>
 
-            {/* Preferences */}
+            {}
             <Card className="crystal-glass border-crystal-border">
               <CardHeader>
                 <CardTitle>Preferences</CardTitle>
@@ -373,5 +373,6 @@ export default function Settings() {
     </MainLayout>
   );
 }
+
 
 
