@@ -11,7 +11,7 @@ import {
   FileImage,
   Settings
 } from 'lucide-react';
-import { Checkbox } from '@/components/ui/checkbox';
+
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { FileTreeProps, FileNode, FileTreeItem } from './types';
 
@@ -19,9 +19,7 @@ import { FileTreeProps, FileNode, FileTreeItem } from './types';
 export const FileTree: React.FC<FileTreeProps> = React.memo(({
   fileTree,
   selectedFile,
-  filesForAnalysis,
   onFileSelect,
-  onFilesForAnalysisChange,
 }) => {
   const [expandedFolders, setExpandedFolders] = useState<Set<string>>(new Set());
 
@@ -102,67 +100,25 @@ export const FileTree: React.FC<FileTreeProps> = React.memo(({
   }, []);
 
 
-  const collectFilePaths = useCallback((node: FileNode): string[] => {
-    if (node.type === 'file') {
-      return [node.path];
-    }
-    
-    if (node.children) {
-      return node.children.flatMap(child => collectFilePaths(child));
-    }
-    
-    return [];
-  }, []);
 
-
-  const handleCheckboxChange = useCallback((node: FileNode, checked: boolean) => {
-    const filePaths = collectFilePaths(node);
-    
-    if (checked) {
-
-      const newFilesForAnalysis = [...new Set([...filesForAnalysis, ...filePaths])];
-      onFilesForAnalysisChange(newFilesForAnalysis);
-    } else {
-
-      const newFilesForAnalysis = filesForAnalysis.filter(path => !filePaths.includes(path));
-      onFilesForAnalysisChange(newFilesForAnalysis);
-    }
-  }, [filesForAnalysis, onFilesForAnalysisChange, collectFilePaths]);
-
-
-  const isNodeChecked = useCallback((node: FileNode): boolean => {
-    const filePaths = collectFilePaths(node);
-    return filePaths.length > 0 && filePaths.every(path => filesForAnalysis.includes(path));
-  }, [filesForAnalysis, collectFilePaths]);
-
-
-  const isNodeIndeterminate = useCallback((node: FileNode): boolean => {
-    if (node.type === 'file') return false;
-    
-    const filePaths = collectFilePaths(node);
-    const checkedPaths = filePaths.filter(path => filesForAnalysis.includes(path));
-    
-    return checkedPaths.length > 0 && checkedPaths.length < filePaths.length;
-  }, [filesForAnalysis, collectFilePaths]);
 
 
   const flattenTree = useCallback((
-    nodes: FileNode[], 
-    level: number = 0, 
+    nodes: FileNode[],
+    level: number = 0,
     result: FileTreeItem[] = []
   ): FileTreeItem[] => {
     for (const node of nodes) {
       const isExpanded = expandedFolders.has(node.path);
       const isSelected = selectedFile?.path === node.path;
-      const isChecked = isNodeChecked(node);
-      
+
       result.push({
         ...node,
         level,
         hasChildren: node.type === 'folder' && (node.children?.length || 0) > 0,
         isExpanded,
         isSelected,
-        isChecked,
+        isChecked: false,
       });
 
 
@@ -170,9 +126,9 @@ export const FileTree: React.FC<FileTreeProps> = React.memo(({
         flattenTree(node.children, level + 1, result);
       }
     }
-    
+
     return result;
-  }, [expandedFolders, selectedFile, isNodeChecked]);
+  }, [expandedFolders, selectedFile]);
 
 
   const flatItems = useMemo(() => {
@@ -253,7 +209,7 @@ export const FileTree: React.FC<FileTreeProps> = React.memo(({
       ? (item.isExpanded ? FolderOpen : Folder)
       : getFileIcon(item.name);
 
-    const isIndeterminate = isNodeIndeterminate(item);
+
     const isFocused = focusedIndex === index;
 
     return (
@@ -280,25 +236,14 @@ export const FileTree: React.FC<FileTreeProps> = React.memo(({
             }
           }}
         >
-          {}
-          <Checkbox
-            checked={item.isChecked}
-            ref={(ref) => {
-              if (ref && isIndeterminate) {
-                ref.indeterminate = true;
-              }
-            }}
-            onCheckedChange={(checked) => handleCheckboxChange(item, !!checked)}
-            className="mr-2 crystal-border-electric"
-            aria-label={`${item.isChecked ? 'Odznacz' : 'Zaznacz'} ${item.name}`}
-          />
+
 
           {}
           {item.type === 'folder' && item.hasChildren && (
             <button
               onClick={() => toggleFolder(item.path)}
               className="mr-1 p-0.5 hover:bg-crystal-electric/10 rounded"
-              aria-label={`${item.isExpanded ? 'Zwiń' : 'Rozwiń'} folder ${item.name}`}
+              aria-label={`${item.isExpanded ? 'Collapse' : 'Expand'} folder ${item.name}`}
             >
               {item.isExpanded ? (
                 <ChevronDown className="w-4 h-4 text-crystal-text-secondary" />
@@ -343,7 +288,7 @@ export const FileTree: React.FC<FileTreeProps> = React.memo(({
       <CardHeader className="pb-3">
         <CardTitle className="text-lg font-semibold text-crystal-text-primary flex items-center">
           <Folder className="w-5 h-5 mr-2 text-crystal-electric" />
-          Struktura Plików
+          File Structure
         </CardTitle>
       </CardHeader>
       <CardContent className="p-0 h-full">
@@ -351,7 +296,7 @@ export const FileTree: React.FC<FileTreeProps> = React.memo(({
           className="h-96 overflow-hidden"
           ref={containerRef}
           role="tree"
-          aria-label="Struktura plików repozytorium"
+          aria-label="Repository file structure"
           tabIndex={0}
           onKeyDown={handleKeyDown}
           onFocus={() => {

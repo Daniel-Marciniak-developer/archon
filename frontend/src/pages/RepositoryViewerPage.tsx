@@ -51,7 +51,7 @@ export const RepositoryViewerPage: React.FC = () => {
       const response = await brain.get_project_files(parseInt(projectId), branch);
 
       if (!response.data) {
-        throw new Error('Brak danych w odpowiedzi z serwera');
+        throw new Error('No data in server response');
       }
 
       const data = response.data;
@@ -77,7 +77,7 @@ export const RepositoryViewerPage: React.FC = () => {
       setCurrentBranch(branch);
       setHasInitialized(true);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Wystąpił nieoczekiwany błąd');
+      setError(err instanceof Error ? err.message : 'An unexpected error occurred');
     } finally {
       setIsLoading(false);
     }
@@ -86,18 +86,18 @@ export const RepositoryViewerPage: React.FC = () => {
 
   const handleFetchFileContent = useCallback(async (filePath: string): Promise<string> => {
     if (!projectId || !user) {
-      throw new Error('Brak autoryzacji');
+      throw new Error('No authorization');
     }
 
     try {
       const response = await brain.get_file_content(parseInt(projectId), filePath, currentBranch);
 
       if (!response.data) {
-        throw new Error('Brak danych w odpowiedzi serwera');
+        throw new Error('No data in server response');
       }
 
       if (!response.data.content) {
-        throw new Error('Brak zawartości pliku w odpowiedzi');
+        throw new Error('No file content in response');
       }
 
       return response.data.content;
@@ -113,16 +113,14 @@ export const RepositoryViewerPage: React.FC = () => {
   }, [fetchRepositoryData]);
 
 
-  const handleAnalyzeRequest = useCallback(async (selectedFilePaths: string[]) => {
+  const handleAnalyzeRequest = useCallback(async () => {
     if (!projectId || !user) return;
 
     try {
-      const response = await brain.start_analysis({ projectId: parseInt(projectId) });
-
-
+      await brain.start_analysis({ projectId: parseInt(projectId) });
       navigate(`/projects/${projectId}/report`);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Błąd rozpoczęcia analizy');
+      setError(err instanceof Error ? err.message : 'Analysis start error');
     }
   }, [projectId, user, navigate]);
 
@@ -146,7 +144,7 @@ export const RepositoryViewerPage: React.FC = () => {
               className="crystal-btn-secondary"
             >
               <ArrowLeft className="w-4 h-4 mr-2" />
-              Powrót do Dashboard
+              Back to Dashboard
             </Button>
             <Skeleton className="h-8 w-64" />
           </div>
@@ -202,7 +200,7 @@ export const RepositoryViewerPage: React.FC = () => {
               className="crystal-btn-secondary"
             >
               <ArrowLeft className="w-4 h-4 mr-2" />
-              Powrót do Dashboard
+              Back to Dashboard
             </Button>
           </div>
 
@@ -210,7 +208,7 @@ export const RepositoryViewerPage: React.FC = () => {
             <CardContent className="p-8 text-center">
               <AlertCircle className="w-16 h-16 text-crystal-critical mx-auto mb-4" />
               <h2 className="text-xl font-semibold text-crystal-text-primary mb-2">
-                Błąd ładowania repozytorium
+                Repository Loading Error
               </h2>
               <p className="text-crystal-text-secondary mb-6">
                 {error}
@@ -220,14 +218,14 @@ export const RepositoryViewerPage: React.FC = () => {
                   onClick={() => fetchRepositoryData(currentBranch)}
                   className="crystal-btn-primary"
                 >
-                  Spróbuj ponownie
+                  Try Again
                 </Button>
                 <Button
                   variant="outline"
                   onClick={() => navigate('/dashboard')}
                   className="crystal-btn-secondary"
                 >
-                  Powrót do Dashboard
+                  Back to Dashboard
                 </Button>
               </div>
             </CardContent>
@@ -253,7 +251,7 @@ export const RepositoryViewerPage: React.FC = () => {
             className="crystal-btn-secondary"
           >
             <ArrowLeft className="w-4 h-4 mr-2" />
-            Powrót do Dashboard
+            Back to Dashboard
           </Button>
         </div>
       </div>

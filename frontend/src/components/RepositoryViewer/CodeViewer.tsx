@@ -78,10 +78,10 @@ export const CodeViewer: React.FC<CodeViewerProps> = React.memo(({
     <div className="flex flex-col items-center justify-center p-12 text-center">
       <AlertCircle className="w-16 h-16 text-crystal-critical mb-4" />
       <h3 className="text-lg font-semibold text-crystal-text-primary mb-2">
-        Błąd ładowania pliku
+        File Loading Error
       </h3>
       <p className="text-crystal-text-secondary max-w-md">
-        {contentError || 'Wystąpił nieoczekiwany błąd podczas ładowania zawartości pliku.'}
+        {contentError || 'An unexpected error occurred while loading file content.'}
       </p>
     </div>
   );
@@ -91,10 +91,10 @@ export const CodeViewer: React.FC<CodeViewerProps> = React.memo(({
     <div className="flex flex-col items-center justify-center p-12 text-center">
       <Code className="w-16 h-16 text-crystal-text-secondary mb-4" />
       <h3 className="text-lg font-semibold text-crystal-text-primary mb-2">
-        Wybierz plik z drzewa
+        Select File from Tree
       </h3>
       <p className="text-crystal-text-secondary max-w-md">
-        Kliknij na plik w drzewie po lewej stronie, aby wyświetlić jego zawartość z podświetlaniem składni.
+        Click on a file in the tree on the left side to display its content with syntax highlighting.
       </p>
     </div>
   );
@@ -154,7 +154,7 @@ export const CodeViewer: React.FC<CodeViewerProps> = React.memo(({
       <CardHeader className="pb-3">
         <CardTitle className="text-lg font-semibold text-crystal-text-primary flex items-center">
           <Code className="w-5 h-5 mr-2 text-crystal-electric" />
-          Podgląd Kodu
+          Code Preview
         </CardTitle>
       </CardHeader>
       <CardContent className="p-0 h-full">
