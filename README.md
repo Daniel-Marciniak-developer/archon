@@ -1,7 +1,6 @@
-<<<<<<< HEAD
-# Archon - Code Analysis Platform
+# Archon
 
-This project consists of a FastAPI backend server and a React + TypeScript frontend application for analyzing GitHub repositories.
+Archon code analysis and refactoring system based on the recommended solutions.
 
 ## Stack
 
@@ -9,7 +8,7 @@ This project consists of a FastAPI backend server and a React + TypeScript front
 - **Backend**: Python FastAPI with `pip` as package manager
 - **Database**: PostgreSQL
 - **Cache/Queue**: Redis + Celery
-- **Authentication**: Firebase Auth or Stack Auth
+- **Authentication**: Stack Auth
 
 ## Prerequisites
 
@@ -24,14 +23,12 @@ Before running the project, you need:
 
 ### 1. Database Setup
 ```bash
-# See SETUP-DATABASE.md for detailed instructions
 createdb archon_dev
 psql -d archon_dev -f backend/schema.sql
 ```
 
 ### 2. Redis Setup
 ```bash
-# See SETUP-REDIS.md for detailed instructions
 # Option 1: Docker
 docker run -d --name redis -p 6379:6379 redis:latest
 
@@ -43,11 +40,9 @@ sudo service redis-server start
 ```bash
 # Backend
 cp backend/.env.example backend/.env
-# Edit backend/.env with your database and Redis URLs
 
 # Frontend
 cp frontend/.env.example frontend/.env
-# Edit frontend/.env with your API URLs
 ```
 
 ### 4. Install Dependencies & Run
@@ -78,7 +73,3 @@ For code analysis to work, start Celery worker:
 cd backend
 celery -A app.libs.celery_worker worker --loglevel=info
 ```
-=======
-# Archon
- Archon code analysis and refactoring system based on the recommended solutions.
->>>>>>> 9585ba3f3f631e579646657f1e9a41ee74af3582
