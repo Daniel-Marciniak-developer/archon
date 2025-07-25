@@ -9,8 +9,8 @@ RUN apk add --no-cache \
     python3 \
     make \
     g++ \
+    git \
     linux-headers \
-    libudev-zero-dev \
     eudev-dev
 
 # Copy package files
