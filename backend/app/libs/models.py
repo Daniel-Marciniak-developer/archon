@@ -53,6 +53,10 @@ class Project(ProjectBase):
     updated_at: datetime
     class Config:
         from_attributes = True
+class ToolName(str, Enum):
+    RUFF = "ruff"
+    BANDIT = "bandit"
+    CUSTOM = "custom"
 class AnalysisBase(BaseModel):
     status: AnalysisStatus = AnalysisStatus.PENDING
     overall_score: Optional[float] = Field(None, ge=0, le=100)
@@ -81,10 +85,15 @@ class Analysis(AnalysisBase):
 class IssueBase(BaseModel):
     category: IssueCategory
     severity: IssueSeverity
+    tool: ToolName
     title: str = Field(..., max_length=500)
     description: str
     file_path: str = Field(..., max_length=1000)
     line_number: int = Field(..., gt=0)
+    start_line: Optional[int] = Field(None, gt=0)
+    end_line: Optional[int] = Field(None, gt=0)
+    start_column: Optional[int] = Field(None, ge=0)
+    end_column: Optional[int] = Field(None, ge=0)
 class IssueCreate(IssueBase):
     analysis_id: int
 class IssueUpdate(BaseModel):
@@ -94,6 +103,10 @@ class IssueUpdate(BaseModel):
     description: Optional[str] = None
     file_path: Optional[str] = Field(None, max_length=1000)
     line_number: Optional[int] = Field(None, gt=0)
+    start_line: Optional[int] = Field(None, gt=0)
+    end_line: Optional[int] = Field(None, gt=0)
+    start_column: Optional[int] = Field(None, ge=0)
+    end_column: Optional[int] = Field(None, ge=0)
 class Issue(IssueBase):
     id: int
     analysis_id: int
@@ -111,3 +124,8 @@ class AnalysisReport(BaseModel):
     issue_counts: dict[str, dict[str, int]]
 class UserWithProjects(User):
     projects: list[ProjectWithAnalysis] = []
+class AnalysisConfig(BaseModel):
+    enable_ruff: bool = True
+    enable_bandit: bool = True
+    ruff_config: Optional[str] = None
+    bandit_config: Optional[str] = None
