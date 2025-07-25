@@ -40,3 +40,9 @@ coverage.xml
 
 # Uvicorn
 *.log
+
+# Analysis reports
+test_analysis_report.json
+quick_analysis_report.json
+quick_test.py
+
