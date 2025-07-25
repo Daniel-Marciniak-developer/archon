@@ -5,12 +5,7 @@ from typing import Optional
 import requests
 import os
 from app.auth import AuthorizedUser
-from app.models.github_connection import (
-    get_github_connection,
-    create_github_connection,
-    delete_github_connection,
-    GitHubConnectionCreate
-)
+
 
 try:
     from slowapi import Limiter
