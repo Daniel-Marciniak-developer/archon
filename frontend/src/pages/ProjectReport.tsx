@@ -1,10 +1,10 @@
 import { useSearchParams, useParams, useNavigate } from "react-router-dom";
 import ReportHeader from "components/ReportHeader";
 import IssuesList from "components/IssuesList";
+import IssuesSummary from "components/IssuesSummary";
 import brain from "brain";
 import { useEffect, useState } from "react";
 import { ProjectReport } from "brain/data-contracts";
-import { getSeverityColor } from "utils/severity";
 import { MainLayout } from "components/MainLayout";
 import ReportPageSkeleton from "components/ReportPageSkeleton";
 import { Button } from "@/components/ui/button";
@@ -72,21 +72,23 @@ const ProjectReportPage = () => {
 
   return (
     <MainLayout>
-      <div className="p-8">
-        {}
-        <div className="mb-6">
-          <Button
-            onClick={handleBackToDashboard}
-            variant="outline"
-            className="border-crystal-border hover:bg-crystal-surface"
-          >
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            Back to Dashboard
-          </Button>
-        </div>
+      <div className="min-h-screen bg-crystal-void">
+        <div className="max-w-7xl mx-auto p-6 lg:p-8 space-y-8">
+          <div className="flex items-center justify-between">
+            <Button
+              onClick={handleBackToDashboard}
+              variant="outline"
+              className="crystal-glass border-crystal-border hover:bg-crystal-surface"
+            >
+              <ArrowLeft className="w-4 h-4 mr-2" />
+              Back to Dashboard
+            </Button>
+          </div>
 
-        <ReportHeader report={report} />
-        <IssuesList issues={report.issues} />
+          <ReportHeader report={report} />
+          <IssuesSummary issues={report.issues} />
+          <IssuesList issues={report.issues} />
+        </div>
       </div>
     </MainLayout>
   );

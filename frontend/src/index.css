@@ -6,7 +6,6 @@
 
 @layer base {
   :root {
-    /* Crys tal i n Darkne ss Li ght Theme (fallback) */
     --background: 240 10% 3.9%;
     --foreground: 0 0% 98%;
     --card: 240 10% 3.9%;
@@ -33,37 +32,37 @@
     --chart-4: 43 74% 66%;
     --chart-5: 27 87% 67%;
 
-    /* Custom Crystal in  Dark ness Variables */
-    --crystal-void: 240 10% 5%; /* #0D0D0F */
-    --crystal-surface: 240 9% 9%; /* #17171A */
-    --crystal-border: 240 10% 18%; /* #2A2A2E */
-    --crystal-text-primary: 240 5% 94%; /* #F0F0F2 */
-    --crystal-text-secondary: 240 5% 53%; /* #848488 */
-    --crystal-electric: 261 100% 62%; /* #8A3FFC */
-    --crystal-critical: 0 85% 60%; /*  #FF4D4F */
-    --crystal-high: 36 100% 62%; /* #FFA940 */
-    --crystal-ok: 130 60% 50%; /* # 52C41A */
+    --crystal-void: 240 10% 5%;
+    --crystal-surface: 240 9% 9%;
+    --crystal-border: 240 10% 18%;
+    --crystal-text-primary: 240 5% 94%;
+    --crystal-text-secondary: 240 5% 53%;
+    --crystal-electric: 261 100% 62%;
+    --crystal-critical: 0 85% 60%;
+    --crystal-high: 36 100% 62%;
+    --crystal-medium: 45 100% 51%;
+    --crystal-low: 217 91% 60%;
+    --crystal-ok: 130 60% 50%;
   }
 
   .dark {
-    /* Crys  t a l in   Darkne ss D ark  Theme (primary) */
-    --background: 240 10% 5%; /* Deep Void #0D0D0F */
-    --foreground: 240 5% 94%; /*  Pris tine Text #F0F0F2 */
-    --card: 240 9% 9%; /* U I Surface #17171A */
+    --background: 240 10% 5%;
+    --foreground: 240 5% 94%;
+    --card: 240 9% 9%;
     --card-foreground: 240 5% 94%;
     --popover: 240 9% 9%;
     --popover-foreground: 240 5% 94%;
-    --primary: 261 100% 62%; /* Electric Violet #8A3FFC */
+    --primary: 261 100% 62%;
     --primary-foreground: 240 5% 94%;
     --secondary: 240 9% 9%;
     --secondary-foreground: 240 5% 94%;
     --muted: 240 9% 9%;
-    --muted-foreground: 240 5% 53%; /* Muted Text #848488 */
+    --muted-foreground: 240 5% 53%;
     --accent: 261 100% 62%;
     --accent-foreground: 240 5% 94%;
-    --destructive: 0 85% 60%; /* Critical Red #FF4D4F */
+    --destructive: 0 85% 60%;
     --destructive-foreground: 240 5% 94%;
-    --border: 240 10% 18%; /* Subtle Line #2A2A2E */
+    --border: 240 10% 18%;
     --input: 240 10% 18%;
     --ring: 261 100% 62%;
     --chart-1: 261 100% 62%;
@@ -87,7 +86,6 @@
     color: hsl(var(--crystal-text-primary));
   }
 
-  /* Custom Crystal Classes */
   .crystal-surface {
     background-color: hsl(var(--crystal-surface));
     border: 1px solid hsl(var(--crystal-border));
@@ -144,7 +142,6 @@
     transform: translateY(-1px);
   }
 
-  /* Text Colors */
   .crystal-text-primary {
     color: hsl(var(--crystal-text-primary));
   }
@@ -169,7 +166,30 @@
     color: hsl(var(--crystal-ok));
   }
 
-  /* Background Colors */
+  .crystal-text-medium {
+    color: hsl(var(--crystal-medium));
+  }
+
+  .crystal-text-low {
+    color: hsl(var(--crystal-low));
+  }
+
+  .bg-crystal-critical {
+    background-color: hsl(var(--crystal-critical));
+  }
+
+  .bg-crystal-high {
+    background-color: hsl(var(--crystal-high));
+  }
+
+  .bg-crystal-medium {
+    background-color: hsl(var(--crystal-medium));
+  }
+
+  .bg-crystal-low {
+    background-color: hsl(var(--crystal-low));
+  }
+
   .crystal-bg-electric {
     background-color: hsl(var(--crystal-electric));
   }
@@ -186,7 +206,6 @@
     background-color: hsl(var(--crystal-ok));
   }
 
-  /* Border Colors */
   .crystal-border-electric {
     border-color: hsl(var(--crystal-electric));
   }
@@ -203,7 +222,6 @@
     border-color: hsl(var(--crystal-ok));
   }
 
-  /* Upload Zone Styles */
   .crystal-upload-zone {
     background: hsl(var(--crystal-surface) / 0.3);
     border: 2px dashed hsl(var(--crystal-border));
@@ -221,7 +239,6 @@
     box-shadow: 0 0 20px hsl(var(--crystal-electric) / 0.2);
   }
 
-  /* Progress Bar */
   .crystal-progress {
     background: hsl(var(--crystal-surface));
     border-radius: 0.5rem;
@@ -237,7 +254,6 @@
     height: 100%;
   }
 
-  /* Loading Animation */
   .crystal-loading {
     animation: crystal-pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
   }
@@ -263,7 +279,6 @@
     100% { transform: rotate(360deg); }
   }
 
-  /* Card Enhancements */
   .crystal-card {
     background: hsl(var(--crystal-surface) / 0.8);
     backdrop-filter: blur(12px);
@@ -278,7 +293,6 @@
     transform: translateY(-2px);
   }
 
-  /* Badge Styles */
   .crystal-badge-electric {
     background: hsl(var(--crystal-electric) / 0.1);
     color: hsl(var(--crystal-electric));
@@ -303,7 +317,6 @@
     border: 1px solid hsl(var(--crystal-critical) / 0.3);
   }
 
-  /* Tab Enhancements */
   .crystal-tabs {
     background: hsl(var(--crystal-surface) / 0.5);
     border-radius: 0.5rem;
@@ -325,7 +338,6 @@
     background: hsl(var(--crystal-border) / 0.5);
   }
 
-  /* Input Enhancements */
   .crystal-input {
     background: hsl(var(--crystal-surface));
     border: 1px solid hsl(var(--crystal-border));
@@ -342,7 +354,6 @@
     color: hsl(var(--crystal-text-secondary));
   }
 
-  /* Responsive Design Helpers */
   @media (max-width: 768px) {
     .crystal-mobile-stack {
       flex-direction: column;
@@ -357,7 +368,6 @@
     }
   }
 
-  /* Accessibility Enhancements */
   .crystal-scrollbar {
     scrollbar-width: thin;
     scrollbar-color: hsl(var(--crystal-electric) / 0.5) hsl(var(--crystal-surface));
@@ -383,14 +393,12 @@
     background: hsl(var(--crystal-electric) / 0.7);
   }
 
-  /* Focus styles for better accessibility */
   .crystal-focus-visible:focus-visible {
     outline: 2px solid hsl(var(--crystal-electric));
     outline-offset: 2px;
     border-radius: 0.25rem;
   }
 
-  /* High contrast mode support */
   @media (prefers-contrast: high) {
     .crystal-glass {
       background: hsl(var(--crystal-surface));
@@ -402,7 +410,6 @@
     }
   }
 
-  /* Reduced motion support */
   @media (prefers-reduced-motion: reduce) {
     .crystal-card,
     .crystal-btn-primary,
