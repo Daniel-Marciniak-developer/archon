@@ -56,22 +56,32 @@ export interface HealthResponse {
 
 
 export interface Issue {
-  
-  id: number;
-  
-  analysis_id: number;
-  
+
+  id?: number;
+
+  analysis_id?: number;
+
   category: string;
-  
+
   severity: string;
-  
+
   title: string;
-  
+
   description: string;
-  
+
   file_path: string;
-  
+
   line_number: number;
+
+  tool?: string;
+
+  start_line?: number;
+
+  start_column?: number;
+
+  end_line?: number;
+
+  end_column?: number;
 }
 
 

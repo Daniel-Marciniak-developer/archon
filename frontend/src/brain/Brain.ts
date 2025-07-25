@@ -180,5 +180,13 @@ export class Brain<SecurityDataType = unknown> extends HttpClient<SecurityDataTy
       format: "json",
       ...params,
     });
+
+  delete_project = (projectId: number, params: RequestParams = {}) =>
+    this.request<any, any>({
+      path: `/routes/projects/${projectId}`,
+      method: "DELETE",
+      secure: true,
+      ...params,
+    });
 }
 
