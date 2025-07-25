@@ -1,26 +1,16 @@
-"""
-Security configuration for production deployment.
-Contains security settings, validation rules, and monitoring configurations.
-"""
 import os
 from typing import Dict, List, Set
 from pathlib import Path
-
 PRODUCTION_MODE = os.getenv("APP_ENV", "development") == "production"
-
 class SecurityConfig:
-    """Centralized security configuration"""
-    
     MAX_FILE_SIZE = 50 * 1024 * 1024 if PRODUCTION_MODE else 100 * 1024 * 1024
     MAX_TOTAL_SIZE = 200 * 1024 * 1024 if PRODUCTION_MODE else 500 * 1024 * 1024
     MAX_FILES_COUNT = 500 if PRODUCTION_MODE else 1000
     MAX_FILENAME_LENGTH = 255
     MAX_FILEPATH_LENGTH = 1000
-    
     UPLOAD_RATE_LIMIT = "3/minute" if PRODUCTION_MODE else "10/minute"
     API_RATE_LIMIT = "60/minute" if PRODUCTION_MODE else "120/minute"
     GITHUB_RATE_LIMIT = "20/minute"
-    
     ALLOWED_EXTENSIONS: Set[str] = {
         '.py', '.pyx', '.pyi', '.pyw',
         '.txt', '.md', '.rst',
@@ -30,7 +20,6 @@ class SecurityConfig:
         '.sql',
         '.env.example',
     }
-    
     DANGEROUS_EXTENSIONS: Set[str] = {
         '.exe', '.dll', '.so', '.dylib', '.bin', '.bat', '.cmd', '.ps1', '.sh',
         '.scr', '.com', '.pif', '.jar', '.war', '.ear', '.class', '.dex',
@@ -40,7 +29,6 @@ class SecurityConfig:
         '.php', '.asp', '.aspx', '.jsp', '.cgi',
         '.vbs', '.wsf', '.hta', '.reg',
     }
-    
     MALICIOUS_CONTENT_PATTERNS: List[bytes] = [
         rb'<script',
         rb'eval\s*\(',
@@ -54,7 +42,6 @@ class SecurityConfig:
         rb'pickle\.loads',
         rb'marshal\.loads',
     ]
-    
     SUSPICIOUS_PATTERNS: List[str] = [
         r'\.\./',
         r'[<>:"|?*]',
@@ -69,7 +56,6 @@ class SecurityConfig:
         r'\.DS_Store',
         r'Thumbs\.db',
     ]
-    
     SECURITY_HEADERS: Dict[str, str] = {
         "X-Content-Type-Options": "nosniff",
         "X-Frame-Options": "DENY",
@@ -79,81 +65,53 @@ class SecurityConfig:
         "Referrer-Policy": "strict-origin-when-cross-origin",
         "Permissions-Policy": "geolocation=(), microphone=(), camera=()",
     }
-    
     LOG_SECURITY_EVENTS = True
     LOG_FILE_UPLOADS = True
     LOG_FAILED_VALIDATIONS = True
-    
     ENABLE_VIRUS_SCANNING = PRODUCTION_MODE
     VIRUS_SCAN_TIMEOUT = 30
-    
     MAX_CONTENT_ANALYSIS_SIZE = 10 * 1024 * 1024
     CONTENT_ANALYSIS_TIMEOUT = 10
-    
     @classmethod
     def get_upload_limits(cls) -> Dict[str, int]:
-        """Get current upload limits"""
         return {
             "max_file_size": cls.MAX_FILE_SIZE,
             "max_total_size": cls.MAX_TOTAL_SIZE,
             "max_files_count": cls.MAX_FILES_COUNT,
             "max_filename_length": cls.MAX_FILENAME_LENGTH,
         }
-    
     @classmethod
     def is_extension_allowed(cls, extension: str) -> bool:
-        """Check if file extension is allowed"""
         return extension.lower() in cls.ALLOWED_EXTENSIONS
-    
     @classmethod
     def is_extension_dangerous(cls, extension: str) -> bool:
-        """Check if file extension is dangerous"""
         return extension.lower() in cls.DANGEROUS_EXTENSIONS
-    
     @classmethod
     def get_security_headers(cls) -> Dict[str, str]:
-        """Get security headers for HTTP responses"""
         return cls.SECURITY_HEADERS.copy()
-
 class SecurityLogger:
-    """Security event logger"""
-    
     @staticmethod
     def log_upload_attempt(user_id: str, file_count: int, total_size: int):
-        """Log file upload attempt"""
         if SecurityConfig.LOG_FILE_UPLOADS:
-            print(f"🔒 SECURITY: Upload attempt - User: {user_id}, Files: {file_count}, Size: {total_size}")
-    
+            pass
     @staticmethod
     def log_validation_failure(user_id: str, filename: str, reason: str):
-        """Log validation failure"""
         if SecurityConfig.LOG_FAILED_VALIDATIONS:
-            print(f"🚨 SECURITY: Validation failed - User: {user_id}, File: {filename}, Reason: {reason}")
-    
+            pass
     @staticmethod
     def log_suspicious_activity(user_id: str, activity: str, details: str):
-        """Log suspicious activity"""
-        print(f"⚠️ SECURITY: Suspicious activity - User: {user_id}, Activity: {activity}, Details: {details}")
-    
+        pass
     @staticmethod
     def log_rate_limit_exceeded(user_id: str, endpoint: str):
-        """Log rate limit exceeded"""
-        print(f"🛑 SECURITY: Rate limit exceeded - User: {user_id}, Endpoint: {endpoint}")
-
+        pass
 def sanitize_user_input(input_str: str, max_length: int = 1000) -> str:
-    """Sanitize user input for logging and storage"""
     if not input_str:
         return ""
-    
     if len(input_str) > max_length:
         input_str = input_str[:max_length] + "..."
-    
     sanitized = ''.join(char for char in input_str if ord(char) >= 32 or char in '\n\t')
-    
     return sanitized
-
 def generate_security_report() -> Dict[str, any]:
-    """Generate security configuration report"""
     return {
         "production_mode": PRODUCTION_MODE,
         "upload_limits": SecurityConfig.get_upload_limits(),
@@ -167,5 +125,4 @@ def generate_security_report() -> Dict[str, any]:
             "failed_validations": SecurityConfig.LOG_FAILED_VALIDATIONS,
         }
     }
-
 __all__ = ['SecurityConfig', 'SecurityLogger', 'sanitize_user_input', 'generate_security_report']
