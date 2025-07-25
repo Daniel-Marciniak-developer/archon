@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Form, Request
+from fastapi import APIRouter, HTTPException, UploadFile, File, Form, Request
 from pydantic import BaseModel
 import asyncpg
 from app.auth import AuthorizedUser
@@ -8,20 +8,102 @@ import shutil
 from pathlib import Path
 from typing import List, Optional, Dict, Any
 from datetime import datetime
-from app.libs.analysis_tasks import run_full_analysis
-import time
-import traceback
+from app.libs.analysis_engine import run_analysis
 import hashlib
 import mimetypes
+import json
+import subprocess
+import asyncio
+import random
+import time
+import traceback
 
 router = APIRouter(prefix="/projects", tags=["Projects"])
 
 def rate_limit(limit_string):
     """Decorator that applies rate limiting if available, otherwise does nothing"""
     def decorator(func):
-        # TODO: Implement proper rate limiting when slowapi is available
         return func
     return decorator
+
+async def run_project_analysis(project_id: int, analysis_id: int, repo_url: str):
+    """Run real analysis for a project"""
+    conn = None
+    project_path = None
+    try:
+        conn = await get_db_connection()
+        await conn.execute(
+            "UPDATE analyses SET status = 'running' WHERE id = $1",
+            analysis_id
+        )
+
+        project_path = tempfile.mkdtemp()
+
+        try:
+            subprocess.run(
+                ["git", "clone", repo_url, project_path],
+                check=True,
+                capture_output=True,
+                timeout=300
+            )
+        except subprocess.TimeoutExpired:
+            raise Exception("Repository cloning timed out")
+        except subprocess.CalledProcessError as e:
+            raise Exception(f"Failed to clone repository: {e}")
+
+        report = run_analysis(project_path)
+
+        report_file_path = f"/app/analysis_reports/analysis_report_{project_id}.json"
+        with open(report_file_path, 'w', encoding='utf-8') as f:
+            json.dump(report, f, indent=2, ensure_ascii=False)
+
+        overall_score = report['overall_score']
+        structure_score = report['structure_score']
+        quality_score = report['quality_score']
+        security_score = report['security_score']
+        dependencies_score = report['dependencies_score']
+
+        await conn.execute(
+            """
+            UPDATE analyses SET
+                status = 'completed',
+                completed_at = $1,
+                overall_score = $2,
+                structure_score = $3,
+                quality_score = $4,
+                security_score = $5,
+                dependencies_score = $6
+            WHERE id = $7
+            """,
+            datetime.now(),
+            overall_score,
+            structure_score,
+            quality_score,
+            security_score,
+            dependencies_score,
+            analysis_id
+        )
+        await conn.execute(
+            "UPDATE projects SET last_analysis_id = $1 WHERE id = $2",
+            analysis_id,
+            project_id
+        )
+
+    except Exception as e:
+        if conn:
+            try:
+                await conn.execute(
+                    "UPDATE analyses SET status = 'failed' WHERE id = $1",
+                    analysis_id
+                )
+            except:
+                pass
+        raise
+    finally:
+        if conn:
+            await conn.close()
+        if project_path and os.path.exists(project_path):
+            shutil.rmtree(project_path)
 
 MAX_FILE_SIZE = 50 * 1024 * 1024
 MAX_TOTAL_SIZE = 200 * 1024 * 1024
@@ -137,12 +219,8 @@ async def get_or_create_user(user_id: str) -> int:
         )
 
         if user_row:
-            print(f"✅ User found: {user_id} -> DB ID {user_row['id']}")
             return user_row["id"]
         else:
-            print(f"❌ User not found in database: {user_id} -> DB ID {db_user_id}")
-            print(f"⚠️ This suggests GitHub OAuth didn't complete properly")
-
             return db_user_id
     finally:
         await conn.close()
@@ -169,42 +247,22 @@ def validate_mock_github_repo(repo_owner: str, repo_name: str) -> dict:
 
 
 async def get_db_connection():
-    """Get database connection with logging"""
-    try:
-        start_time = time.time()
-        print(f"🔌 Database: Attempting to connect...")
-        
-        db_url = os.getenv("DATABASE_URL_DEV")
-        if not db_url:
-            raise ValueError("DATABASE_URL_DEV not found in environment variables")
-        conn = await asyncpg.connect(db_url)
-        
-        connect_time = (time.time() - start_time) * 1000
-        print(f"✅ Database: Connected successfully in {connect_time:.2f}ms")
-        
-        return conn
-    except Exception as e:
-        print(f"❌ Database: Connection failed - {str(e)}")
-        print(f"📊 Database: Full error traceback:")
-        traceback.print_exc()
-        raise HTTPException(status_code=500, detail="Database connection failed")
+    """Get database connection"""
+    db_url = os.getenv("DATABASE_URL_DEV")
+    if not db_url:
+        raise ValueError("DATABASE_URL_DEV not found in environment variables")
+    return await asyncpg.connect(db_url)
 
 
 @router.get("")
 async def get_projects(user: AuthorizedUser) -> List[ProjectResponse]:
-    """Get all projects for the authenticated user with comprehensive logging"""
-    operation_start = time.time()
-    db_user_id = convert_user_id_to_int(user.sub)
-    
-    print(f"📊 API: GET /projects - Starting request for user {user.sub} (DB ID: {db_user_id})")
-    
+    """Get all projects for the authenticated user"""
+    db_user_id = await get_or_create_user(user.sub)
+
     conn = None
     try:
         conn = await get_db_connection()
-        
-        query_start = time.time()
-        print(f"🔍 Database: Querying projects for db_user_id {db_user_id}")
-        
+
         projects_query = """
             SELECT p.id, p.repo_name, p.repo_owner, p.repo_url, p.project_source,
                    p.upload_metadata, p.last_analysis_id, p.created_at as project_created_at,
@@ -216,15 +274,11 @@ async def get_projects(user: AuthorizedUser) -> List[ProjectResponse]:
             WHERE p.user_id = $1
             ORDER BY p.id DESC
         """
-        
+
         rows = await conn.fetch(projects_query, db_user_id)
-        query_time = (time.time() - query_start) * 1000
-        
-        print(f"✅ Database: Retrieved {len(rows)} projects in {query_time:.2f}ms")
-        
-        transform_start = time.time()
+
         projects = []
-        
+
         for row in rows:
             project_data = {
                 "id": row["id"],
@@ -236,7 +290,7 @@ async def get_projects(user: AuthorizedUser) -> List[ProjectResponse]:
                 "created_at": row["project_created_at"].isoformat() if row.get("project_created_at") else None,
                 "latest_analysis": None
             }
-            
+
             if row["last_analysis_id"]:
                 project_data["latest_analysis"] = {
                     "id": row["last_analysis_id"],
@@ -249,33 +303,16 @@ async def get_projects(user: AuthorizedUser) -> List[ProjectResponse]:
                     "created_at": row["analysis_created_at"].isoformat() if row["analysis_created_at"] else None,
                     "completed_at": row["analysis_completed_at"].isoformat() if row["analysis_completed_at"] else None
                 }
-            
+
             projects.append(project_data)
-        
-        transform_time = (time.time() - transform_start) * 1000
-        total_time = (time.time() - operation_start) * 1000
-        
-        print(f"🔄 API: Data transformation completed in {transform_time:.2f}ms")
-        print(f"✅ API: GET /projects completed successfully in {total_time:.2f}ms")
-        print(f"📈 API: Returning {len(projects)} projects with analysis data")
-        
+
         return projects
-        
-    except asyncpg.PostgresError as e:
-        error_time = (time.time() - operation_start) * 1000
-        print(f"❌ Database: PostgreSQL error after {error_time:.2f}ms - {str(e)}")
-        print(f"📊 Database: Error code: {e.sqlstate}")
-        raise HTTPException(status_code=500, detail=f"Database error: {str(e)}")
+
     except Exception as e:
-        error_time = (time.time() - operation_start) * 1000
-        print(f"❌ API: Unexpected error in GET /projects after {error_time:.2f}ms - {str(e)}")
-        print(f"📊 API: Full error traceback:")
-        traceback.print_exc()
         raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
     finally:
         if conn:
             await conn.close()
-            print(f"🔌 Database: Connection closed")
 
 
 @router.get("/github/repositories", response_model=GitHubReposResponse)
@@ -476,7 +513,7 @@ async def delete_project(project_id: int, user: AuthorizedUser):
     Only the project owner can delete their projects.
     """
     operation_start = time.time()
-    db_user_id = convert_user_id_to_int(user.sub)
+    db_user_id = await get_or_create_user(user.sub)
 
     print(f"🗑️ API: DELETE /projects/{project_id} - Starting request for user {user.sub} (DB ID: {db_user_id})")
 
@@ -531,9 +568,9 @@ async def start_analysis(project_id: int, user: AuthorizedUser):
     """
     conn = None
     try:
-        db_user_id = convert_user_id_to_int(user.sub)
+        db_user_id = await get_or_create_user(user.sub)
         conn = await get_db_connection()
-        
+
         project_record = await conn.fetchrow(
             "SELECT repo_url FROM projects WHERE id = $1 AND user_id = $2",
             project_id, db_user_id
@@ -555,19 +592,24 @@ async def start_analysis(project_id: int, user: AuthorizedUser):
             """,
             project_id
         )
-        
-        run_full_analysis.delay(
-            analysis_id=analysis_id,
-            repo_url=project_record['repo_url'],
-            github_token=user_record['github_access_token']
+
+        await conn.execute(
+            "UPDATE projects SET last_analysis_id = $1 WHERE id = $2",
+            analysis_id,
+            project_id
         )
+
+        asyncio.create_task(run_project_analysis(
+            project_id=project_id,
+            analysis_id=analysis_id,
+            repo_url=project_record['repo_url']
+        ))
 
         return {"message": "Analysis started", "analysis_id": analysis_id}
 
     except HTTPException as e:
         raise e
     except Exception as e:
-        traceback.print_exc()
         raise HTTPException(status_code=500, detail=str(e))
     finally:
         if conn:
@@ -581,7 +623,7 @@ async def get_project_files(project_id: int, user: AuthorizedUser, branch: str =
     Returns the complete file tree for the specified branch.
     """
     operation_start = time.time()
-    db_user_id = convert_user_id_to_int(user.sub)
+    db_user_id = await get_or_create_user(user.sub)
 
     print(f"📁 API: GET /projects/{project_id}/files - Starting request for user {user.sub} (DB ID: {db_user_id}, branch: {branch})")
 
@@ -743,7 +785,7 @@ async def get_file_content(project_id: int, file_path: str, user: AuthorizedUser
     Get content of a specific file from a GitHub project.
     """
     operation_start = time.time()
-    db_user_id = convert_user_id_to_int(user.sub)
+    db_user_id = await get_or_create_user(user.sub)
 
     print(f"📄 API: GET /projects/{project_id}/files/content - File: {file_path} (branch: {branch})")
 
@@ -1088,7 +1130,7 @@ async def upload_project_files(
     Supports multiple files and basic project validation.
     """
     operation_start = time.time()
-    db_user_id = convert_user_id_to_int(user.sub)
+    db_user_id = await get_or_create_user(user.sub)
 
     print(f"📤 API: POST /upload - Starting upload for user {user.sub} (DB ID: {db_user_id})")
     print(f"📁 API: Received {len(files)} files")
@@ -1220,8 +1262,6 @@ async def upload_project_files(
 
         finally:
             await conn.close()
-
-        # TODO: In a real implementation, you would:
 
         total_time = (time.time() - operation_start) * 1000
         print(f"🎉 API: Upload completed successfully in {total_time:.2f}ms")
