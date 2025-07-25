@@ -20,7 +20,9 @@ import {
   Upload,
   Trash2,
   Code2,
-  MoreVertical
+  MoreVertical,
+  Play,
+  Loader2
 } from 'lucide-react';
 import {
   DropdownMenu,
@@ -40,6 +42,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { useUser } from '@stackframe/react';
 import { toast } from 'sonner';
+import brain from 'brain';
 
 interface Props {
   project: ProjectResponse;
@@ -58,75 +61,50 @@ export function ProjectCard({ project, onProjectDeleted }: Props) {
   const user = useUser();
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
 
   const score = project.latest_analysis?.overall_score;
   const color = getScoreColor(score);
+  const hasAnalysis = project.latest_analysis && project.latest_analysis.status === 'completed';
+  const isAnalysisRunning = project.latest_analysis && (project.latest_analysis.status === 'pending' || project.latest_analysis.status === 'running');
 
   const chartData = [{ name: 'score', value: score ?? 0, fill: color }];
 
   const handleDeleteProject = async () => {
-
-
     if (!user) {
-
       return;
     }
 
     setIsDeleting(true);
     try {
-
-
-      const authJson = await user.getAuthJson();
-      const accessToken = authJson.accessToken;
-
-      if (!accessToken) {
-
-        throw new Error('Brak tokenu autoryzacji');
-      }
-
-
-
-      const response = await fetch(`/routes/projects/${project.id}`, {
-        method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${accessToken}`,
-          'Content-Type': 'application/json',
-        },
-      });
-
-
+      const response = await brain.delete_project(project.id);
 
       if (!response.ok) {
-        const errorText = await response.text();
-
         throw new Error(`Failed to delete project: ${response.status}`);
       }
 
       const result = await response.json();
-
       toast.success(`Project ${result.project_name} deleted successfully`);
-
 
       if (onProjectDeleted) {
         onProjectDeleted();
       }
     } catch (error) {
-
       toast.error(error instanceof Error ? error.message : 'Failed to delete project');
     } finally {
-
       setIsDeleting(false);
       setIsDeleteDialogOpen(false);
     }
   };
 
   const handleCardClick = (e: React.MouseEvent) => {
-
     if ((e.target as HTMLElement).closest('[data-dropdown-trigger]') ||
         (e.target as HTMLElement).closest('button')) {
       return;
     }
-    navigate(`/projects/${project.id}/report`);
+    if (hasAnalysis) {
+      navigate(`/projects/${project.id}/report`);
+    }
   };
 
   return (
@@ -179,7 +157,7 @@ export function ProjectCard({ project, onProjectDeleted }: Props) {
                 <DropdownMenuContent align="end" className="crystal-surface border-crystal-border">
                   {project.project_source === 'github' && (
                     <DropdownMenuItem
-                      onClick={(e) => {
+                      onClick={(e: any) => {
                         e.stopPropagation();
                         navigate(`/projects/${project.id}/repository`);
                       }}
@@ -190,7 +168,7 @@ export function ProjectCard({ project, onProjectDeleted }: Props) {
                     </DropdownMenuItem>
                   )}
                   <DropdownMenuItem
-                    onClick={(e) => {
+                    onClick={(e: any) => {
                       e.stopPropagation();
                       setIsDeleteDialogOpen(true);
                     }}
@@ -225,30 +203,62 @@ export function ProjectCard({ project, onProjectDeleted }: Props) {
             </RadialBarChart>
           </ResponsiveContainer>
           <div className="absolute inset-0 flex items-center justify-center">
-            <span className="text-2xl font-bold" style={{ color }}>
-              {score !== null && score !== undefined ? `${Math.round(score)}%` : 'N/A'}
-            </span>
+            {isAnalysisRunning || isAnalyzing ? (
+              <Loader2 className="w-8 h-8 animate-spin text-crystal-electric" />
+            ) : (
+              <span className="text-2xl font-bold" style={{ color }}>
+                {score !== null && score !== undefined ? `${Math.round(score)}%` : 'N/A'}
+              </span>
+            )}
           </div>
         </div>
         <p className="mt-2 text-sm font-medium" style={{ color }}>
-          Overall Health Score
+          {isAnalysisRunning || isAnalyzing ? 'Analyzing...' : 'Overall Health Score'}
         </p>
       </CardContent>
         <div className="p-6 pt-0 space-y-2">
-          <Button
-            onClick={(e) => {
-              e.stopPropagation();
-              navigate(`/projects/${project.id}/report`);
-            }}
-            className="crystal-btn-primary w-full"
-          >
-            <Eye className="w-4 h-4 mr-2" />
-            View Report
-          </Button>
+          {hasAnalysis ? (
+            <Button
+              onClick={(e: any) => {
+                e.stopPropagation();
+                navigate(`/projects/${project.id}/report`);
+              }}
+              className="crystal-btn-primary w-full"
+            >
+              <Eye className="w-4 h-4 mr-2" />
+              View Report
+            </Button>
+          ) : isAnalysisRunning || isAnalyzing ? (
+            <Button
+              disabled
+              className="crystal-btn-primary w-full opacity-50"
+            >
+              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+              Analyzing...
+            </Button>
+          ) : (
+            <Button
+              onClick={async (e: any) => {
+                e.stopPropagation();
+                try {
+                  setIsAnalyzing(true);
+                  await brain.start_analysis({ projectId: project.id });
+                  navigate(`/projects/${project.id}/report`);
+                } catch (error) {
+                  toast.error('Failed to start analysis');
+                  setIsAnalyzing(false);
+                }
+              }}
+              className="crystal-btn-primary w-full"
+            >
+              <Play className="w-4 h-4 mr-2" />
+              Analyze
+            </Button>
+          )}
 
           {project.project_source === 'github' && (
             <Button
-              onClick={(e) => {
+              onClick={(e: any) => {
                 e.stopPropagation();
                 navigate(`/projects/${project.id}/repository`);
               }}

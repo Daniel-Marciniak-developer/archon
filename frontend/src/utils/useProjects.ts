@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import brain from 'brain';
 import { ProjectResponse } from 'types';
 
@@ -6,29 +6,25 @@ export function useProjects() {
   const [projects, setProjects] = useState<ProjectResponse[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const projectsRef = useRef<ProjectResponse[]>([]);
 
-  const fetchProjects = useCallback(async () => {
-
-    setLoading(true);
+  const fetchProjects = useCallback(async (showLoading = true) => {
+    if (showLoading) setLoading(true);
     setError(null);
     try {
-
       const response = await brain.get_projects();
       if (!response.ok) {
         throw new Error(`HTTP ${response.status}: ${response.statusText}`);
       }
       const data = await response.json();
       setProjects(data);
-
+      projectsRef.current = data;
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to load projects';
-
       setError(errorMessage);
-
       setProjects([]);
     } finally {
-      setLoading(false);
-
+      if (showLoading) setLoading(false);
     }
   }, []);
 
@@ -36,8 +32,22 @@ export function useProjects() {
     fetchProjects();
   }, [fetchProjects]);
 
-  const refetch = useCallback(() => {
+  useEffect(() => {
+    const interval = setInterval(() => {
+      const hasRunningAnalysis = projectsRef.current.some(project =>
+        project.latest_analysis &&
+        (project.latest_analysis.status === 'pending' || project.latest_analysis.status === 'running')
+      );
 
+      if (hasRunningAnalysis) {
+        fetchProjects(false);
+      }
+    }, 3000);
+
+    return () => clearInterval(interval);
+  }, [fetchProjects]);
+
+  const refetch = useCallback(() => {
     fetchProjects();
   }, [fetchProjects]);
 
