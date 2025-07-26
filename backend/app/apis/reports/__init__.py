@@ -67,7 +67,25 @@ def clean_file_path(file_path: str) -> str:
 
     return path_parts[-1] if path_parts else "unknown"
 
-def load_real_report_data(project_id: int) -> ProjectReport:
+async def get_project_name(project_id: int) -> str:
+    """Get the actual project name from database"""
+    try:
+        from app.libs.database import get_db_connection
+        conn = await get_db_connection()
+        try:
+            project = await conn.fetchrow(
+                "SELECT repo_owner, repo_name FROM projects WHERE id = $1",
+                project_id
+            )
+            if project:
+                return project['repo_name']
+            return f"Project {project_id}"
+        finally:
+            await conn.close()
+    except Exception:
+        return f"Project {project_id}"
+
+async def load_real_report_data(project_id: int) -> ProjectReport:
     """Load real analysis data from project-specific analysis report"""
     try:
         project_report_path = f"/app/analysis_reports/analysis_report_{project_id}.json"
@@ -75,10 +93,7 @@ def load_real_report_data(project_id: int) -> ProjectReport:
         if os.path.exists(project_report_path):
             report_file_path = project_report_path
         else:
-            report_file_path = "/app/quick_analysis_report.json"
-
-        if not os.path.exists(report_file_path):
-            return create_fallback_report(project_id)
+            return await create_fallback_report(project_id)
 
         with open(report_file_path, 'r', encoding='utf-8') as f:
             data = json.load(f)
@@ -103,11 +118,11 @@ def load_real_report_data(project_id: int) -> ProjectReport:
         severity_order = {"Critical": 0, "High": 1, "Medium": 2, "Low": 3}
         issues.sort(key=lambda x: severity_order.get(x.severity, 4))
 
-        project_name = f"Analysis Project {project_id}"
-        if project_report_path == f"/app/analysis_reports/analysis_report_{project_id}.json":
-            project_name = f"Real Analysis Project {project_id}"
-        else:
-            project_name = f"Demo Analysis Project {project_id}"
+        try:
+            project_name = await get_project_name(project_id)
+        except Exception as e:
+            print(f"Warning: Could not get project name for {project_id}: {e}")
+            project_name = f"Project {project_id}"
 
         return ProjectReport(
             project_id=project_id,
@@ -121,18 +136,24 @@ def load_real_report_data(project_id: int) -> ProjectReport:
         )
 
     except Exception:
-        return create_fallback_report(project_id)
+        return await create_fallback_report(project_id)
 
-def create_fallback_report(project_id: int) -> ProjectReport:
-    """Creates a fallback mock report when real data is not available."""
+async def create_fallback_report(project_id: int) -> ProjectReport:
+    """Creates a fallback report when real data is not available - perfect scores for empty repos."""
+    try:
+        project_name = await get_project_name(project_id)
+    except Exception as e:
+        print(f"Warning: Could not get project name for {project_id}: {e}")
+        project_name = f"Project {project_id}"
+
     return ProjectReport(
         project_id=project_id,
-        project_name=f"Archon Demo Project {project_id}",
-        overall_score=78.5,
-        structure_score=85.0,
-        quality_score=70.0,
-        security_score=65.5,
-        dependencies_score=95.0,
+        project_name=project_name,
+        overall_score=100.0,
+        structure_score=100.0,
+        quality_score=100.0,
+        security_score=100.0,
+        dependencies_score=100.0,
         issues=[]
     )
 
@@ -142,7 +163,7 @@ async def get_project_report(request: Request, project_id: int):
     if project_id <= 0:
         raise HTTPException(status_code=400, detail="Project ID must be positive")
 
-    report = load_real_report_data(project_id)
+    report = await load_real_report_data(project_id)
     if not report:
         raise HTTPException(status_code=404, detail="Report not found")
 
