@@ -104,7 +104,7 @@ const Dashboard = () => {
           <h1 className="text-3xl font-bold text-crystal-text-primary">
             Dashboard
           </h1>
-          <Button 
+          <Button
             className="crystal-button-violet"
             onClick={() => handleAddProject()}
           >

@@ -159,7 +159,7 @@ export class Brain<SecurityDataType = unknown> extends HttpClient<SecurityDataTy
       ...params,
     });
 
-  
+    
   get_project_files = (projectId: number, branch: string = "main", params: RequestParams = {}) =>
     this.request<any, any>({
       path: `/routes/projects/${projectId}/files`,
