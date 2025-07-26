@@ -50,10 +50,10 @@ interface Props {
 }
 
 const getScoreColor = (score: number | null | undefined) => {
-  if (score === null || score === undefined) return "#848488"; // Muted secondary text color
-  if (score >= 80) return "#52C41A"; // Success Green
-  if (score >= 40) return "#FFA940"; // Warning Amber
-  return "#FF4D4F"; // Critical Red
+  if (score === null || score === undefined) return "#848488";
+  if (score >= 80) return "#52C41A";
+  if (score >= 40) return "#FFA940";
+  return "#FF4D4F";
 };
 
 export function ProjectCard({ project, onProjectDeleted }: Props) {
@@ -218,16 +218,31 @@ export function ProjectCard({ project, onProjectDeleted }: Props) {
       </CardContent>
         <div className="p-6 pt-0 space-y-2">
           {hasAnalysis ? (
-            <Button
-              onClick={(e: any) => {
-                e.stopPropagation();
-                navigate(`/projects/${project.id}/report`);
-              }}
-              className="crystal-btn-primary w-full"
-            >
-              <Eye className="w-4 h-4 mr-2" />
-              View Report
-            </Button>
+            <>
+              <Button
+                onClick={(e: any) => {
+                  e.stopPropagation();
+                  navigate(`/projects/${project.id}/report`);
+                }}
+                className="crystal-btn-primary w-full"
+              >
+                <Eye className="w-4 h-4 mr-2" />
+                View Report
+              </Button>
+              {project.project_source === 'github' && (
+                <Button
+                  onClick={(e: any) => {
+                    e.stopPropagation();
+                    navigate(`/projects/${project.id}/repository`);
+                  }}
+                  variant="outline"
+                  className="w-full border-crystal-border hover:bg-crystal-surface"
+                >
+                  <Code2 className="w-4 h-4 mr-2" />
+                  View Repository
+                </Button>
+              )}
+            </>
           ) : isAnalysisRunning || isAnalyzing ? (
             <Button
               disabled
@@ -237,37 +252,38 @@ export function ProjectCard({ project, onProjectDeleted }: Props) {
               Analyzing...
             </Button>
           ) : (
-            <Button
-              onClick={async (e: any) => {
-                e.stopPropagation();
-                try {
-                  setIsAnalyzing(true);
-                  await brain.start_analysis({ projectId: project.id });
-                  navigate(`/projects/${project.id}/report`);
-                } catch (error) {
-                  toast.error('Failed to start analysis');
-                  setIsAnalyzing(false);
-                }
-              }}
-              className="crystal-btn-primary w-full"
-            >
-              <Play className="w-4 h-4 mr-2" />
-              Analyze
-            </Button>
-          )}
-
-          {project.project_source === 'github' && (
-            <Button
-              onClick={(e: any) => {
-                e.stopPropagation();
-                navigate(`/projects/${project.id}/repository`);
-              }}
-              variant="outline"
-              className="w-full border-crystal-border hover:bg-crystal-surface"
-            >
-              <Code2 className="w-4 h-4 mr-2" />
-              View Repository
-            </Button>
+            <>
+              <Button
+                onClick={async (e: any) => {
+                  e.stopPropagation();
+                  try {
+                    setIsAnalyzing(true);
+                    await brain.start_analysis({ projectId: project.id });
+                    navigate(`/projects/${project.id}/report`);
+                  } catch (error) {
+                    toast.error('Failed to start analysis');
+                    setIsAnalyzing(false);
+                  }
+                }}
+                className="crystal-btn-primary w-full"
+              >
+                <Play className="w-4 h-4 mr-2" />
+                Analyze
+              </Button>
+              {project.project_source === 'github' && (
+                <Button
+                  onClick={(e: any) => {
+                    e.stopPropagation();
+                    navigate(`/projects/${project.id}/repository`);
+                  }}
+                  variant="outline"
+                  className="w-full border-crystal-border hover:bg-crystal-surface"
+                >
+                  <Code2 className="w-4 h-4 mr-2" />
+                  View Repository
+                </Button>
+              )}
+            </>
           )}
         </div>
       </Card>
