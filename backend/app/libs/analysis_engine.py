@@ -30,6 +30,10 @@ class AnalysisEngine:
     def run_analysis(self, project_path: str) -> Dict[str, Any]:
         self.logger.info(f"Starting complete analysis on {project_path}")
 
+        if self._is_empty_or_docs_only_repository(project_path):
+            self.logger.info("Repository is empty or contains only documentation - returning perfect scores")
+            return self._create_perfect_score_report()
+
         all_issues = []
 
         for analyzer in self.analyzers:
@@ -104,6 +108,61 @@ class AnalysisEngine:
             result["end_column"] = issue.end_column
 
         return result
+
+    def _is_empty_or_docs_only_repository(self, project_path: str) -> bool:
+        """Check if repository is empty or contains only documentation files"""
+        import os
+
+        try:
+            all_files = []
+            for root, dirs, files in os.walk(project_path):
+                if '.git' in dirs:
+                    dirs.remove('.git')
+
+                for file in files:
+                    file_path = os.path.join(root, file)
+                    rel_path = os.path.relpath(file_path, project_path)
+                    all_files.append(rel_path.lower())
+
+            if not all_files:
+                return True
+
+            docs_extensions = {'.md', '.txt', '.rst', '.pdf', '.doc', '.docx'}
+            config_files = {'license', 'changelog', 'authors', 'contributors', 'copying', 'install', 'news', 'readme'}
+
+            code_files = []
+            for file_path in all_files:
+                file_name = os.path.basename(file_path).lower()
+                file_ext = os.path.splitext(file_name)[1]
+                file_base = os.path.splitext(file_name)[0]
+
+                if file_ext in docs_extensions:
+                    continue
+
+                if file_base in config_files:
+                    continue
+
+                if '.git' in file_path:
+                    continue
+
+                code_files.append(file_path)
+
+            return len(code_files) == 0
+
+        except Exception as e:
+            self.logger.error(f"Error checking repository content: {e}")
+            return False
+
+    def _create_perfect_score_report(self) -> Dict[str, Any]:
+        """Create a perfect score report for empty/docs-only repositories"""
+        return {
+            "overall_score": 100.0,
+            "structure_score": 100.0,
+            "quality_score": 100.0,
+            "security_score": 100.0,
+            "dependencies_score": 100.0,
+            "issues": []
+        }
 
 
 def run_analysis(project_path: str) -> Dict[str, Any]:
