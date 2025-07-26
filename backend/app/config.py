@@ -6,7 +6,7 @@ class Settings(BaseSettings):
     app_env: str = Field(default="development", env="APP_ENV")
     debug: bool = Field(default=True, env="DEBUG")
     database_url: str = Field(default="postgresql://archon_user:archon_password@postgres:5432/archon_dev", env="DATABASE_URL_DEV")
-    redis_url: str = Field(default="redis://localhost:6379/0", env="REDIS_URL")
+
     jwt_secret_key: str = Field(default="dev-secret-key", env="JWT_SECRET_KEY")
     github_client_id: Optional[str] = Field(default=None, env="GITHUB_CLIENT_ID")
     github_client_secret: Optional[str] = Field(default=None, env="GITHUB_CLIENT_SECRET")
