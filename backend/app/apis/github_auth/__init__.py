@@ -244,7 +244,9 @@ async def github_oauth_callback(request: Request, user: AuthorizedUser):
 
     except Exception as e:
         print(f"❌ GitHub Callback Error: {str(e)}")
-        raise HTTPException(status_code=500, detail=str(e))
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=f"GitHub callback failed: {str(e)}")
 
 @router.delete("/github/disconnect")
 async def disconnect_github(user: AuthorizedUser):
