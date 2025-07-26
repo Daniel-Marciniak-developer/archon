@@ -1,39 +1,27 @@
-# Frontend Dockerfile for Archon
-FROM node:20-alpine
+FROM node:20-alpine as deps
 
-# Set working directory
+RUN apk add --no-cache python3 make g++ git linux-headers eudev-dev
+
 WORKDIR /app
-
-# Install dependencies for node-gyp and native modules
-RUN apk add --no-cache \
-    python3 \
-    make \
-    g++ \
-    git \
-    linux-headers \
-    eudev-dev
-
-# Copy package files
 COPY package*.json ./
+RUN npm install --legacy-peer-deps --production=false
 
-# Install dependencies
-RUN npm install --legacy-peer-deps
+FROM node:20-alpine as runner
 
-# Copy application code
-COPY . .
+RUN addgroup -g 1001 -S nodejs && adduser -S nextjs -u 1001
 
-# Create non-root user
-RUN addgroup -g 1001 -S nodejs && \
-    adduser -S nextjs -u 1001 && \
-    chown -R nextjs:nodejs /app
+WORKDIR /app
+RUN chown nextjs:nodejs /app
+
+COPY --from=deps --chown=nextjs:nodejs /app/node_modules ./node_modules
+COPY --chown=nextjs:nodejs package*.json ./
+COPY --chown=nextjs:nodejs . .
+
 USER nextjs
 
-# Expose port
 EXPOSE 5173
 
-# Health check
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
     CMD wget --no-verbose --tries=1 --spider http://localhost:5173 || exit 1
 
-# Default command
 CMD ["npm", "run", "dev", "--", "--host", "0.0.0.0"]

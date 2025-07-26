@@ -21,22 +21,7 @@ services:
       timeout: 5s
       retries: 5
 
-  # Redis Cache/Queue
-  redis:
-    image: redis:7-alpine
-    container_name: archon-redis
-    ports:
-      - "6379:6379"
-    volumes:
-      - redis_data:/data
-    networks:
-      - archon-network
-    restart: unless-stopped
-    healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
+
 
   # Backend API
   backend:
@@ -47,7 +32,7 @@ services:
     environment:
       - DATABASE_URL_DEV=postgresql://archon_user:archon_password@postgres:5432/archon_dev
       - DATABASE_URL_ADMIN_DEV=postgresql://archon_user:archon_password@postgres:5432/archon_dev
-      - REDIS_URL=redis://redis:6379/0
+
       - ARCHON_SERVICE_TYPE=development
       - STACK_AUTH_PROJECT_ID=97bafa9b-894f-4d26-9dd4-6f0f69c41954
       - STACK_AUTH_PUBLISHABLE_CLIENT_KEY=pck_qz8nx0vvfaadked7dkqzg4whks8gzga6bb6txf10m9z4r
@@ -62,33 +47,9 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
-      redis:
-        condition: service_healthy
     restart: unless-stopped
     command: uvicorn main:app --host 0.0.0.0 --port 8000 --reload
 
-  # Celery Worker
-  celery-worker:
-    build:
-      context: ./backend
-      dockerfile: Dockerfile
-    container_name: archon-celery-worker
-    environment:
-      - DATABASE_URL_DEV=postgresql://archon_user:archon_password@postgres:5432/archon_dev
-      - DATABASE_URL_ADMIN_DEV=postgresql://archon_user:archon_password@postgres:5432/archon_dev
-      - REDIS_URL=redis://redis:6379/0
-      - ARCHON_SERVICE_TYPE=development
-    volumes:
-      - ./backend:/app
-    networks:
-      - archon-network
-    depends_on:
-      postgres:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
-    restart: unless-stopped
-    command: celery -A app.libs.celery_worker worker --loglevel=info
 
   # Frontend
   frontend:
@@ -113,8 +74,6 @@ services:
 
 volumes:
   postgres_data:
-    driver: local
-  redis_data:
     driver: local
 
 networks:
