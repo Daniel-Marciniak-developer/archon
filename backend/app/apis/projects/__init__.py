@@ -1,7 +1,8 @@
-from fastapi import APIRouter, HTTPException, UploadFile, File, Form, Request
+from fastapi import APIRouter, HTTPException, Request
 from pydantic import BaseModel
 import asyncpg
 from app.auth import AuthorizedUser
+from app.libs.encryption import decrypt_token
 import os
 import tempfile
 import shutil
@@ -9,20 +10,28 @@ from pathlib import Path
 from typing import List, Optional, Dict, Any
 from datetime import datetime
 from app.libs.analysis_engine import run_analysis
-import hashlib
-import mimetypes
 import json
 import subprocess
 import asyncio
-import random
 import time
 import traceback
 
 router = APIRouter(prefix="/projects", tags=["Projects"])
 
+try:
+    from slowapi import Limiter
+    from slowapi.util import get_remote_address
+    limiter = Limiter(key_func=get_remote_address)
+    RATE_LIMITING_AVAILABLE = True
+except ImportError:
+    limiter = None
+    RATE_LIMITING_AVAILABLE = False
+
 def rate_limit(limit_string):
     """Decorator that applies rate limiting if available, otherwise does nothing"""
     def decorator(func):
+        if RATE_LIMITING_AVAILABLE and limiter:
+            return limiter.limit(limit_string)(func)
         return func
     return decorator
 
@@ -254,13 +263,11 @@ class GitHubReposResponse(BaseModel):
     repositories: List[GitHubRepo]
 
 
-async def get_or_create_user(user_id: str) -> int:
+async def get_or_create_user(user_id: str) -> str:
     """Get existing user or create new user from auth ID"""
     conn = await get_db_connection()
     try:
-        import hashlib
-        hash_bytes = hashlib.sha256(user_id.encode()).digest()
-        db_user_id = int.from_bytes(hash_bytes[:4], byteorder='big') % (2**31 - 1)
+        db_user_id = convert_user_id_to_uuid(user_id)
 
         user_row = await conn.fetchrow(
             "SELECT id FROM users WHERE id = $1",
@@ -268,7 +275,7 @@ async def get_or_create_user(user_id: str) -> int:
         )
 
         if user_row:
-            return user_row["id"]
+            return str(user_row["id"])
         else:
             return db_user_id
     finally:
@@ -304,7 +311,8 @@ async def get_db_connection():
 
 
 @router.get("")
-async def get_projects(user: AuthorizedUser) -> List[ProjectResponse]:
+@rate_limit("30/minute")
+async def get_projects(request: Request, user: AuthorizedUser) -> List[ProjectResponse]:
     """Get all projects for the authenticated user"""
     db_user_id = await get_or_create_user(user.sub)
 
@@ -449,16 +457,17 @@ async def validate_github_repo(repo_data: dict, user: AuthorizedUser) -> dict:
 
 
 @router.post("")
-async def create_project(request: ProjectCreateRequest, user: AuthorizedUser) -> ProjectResponse:
+@rate_limit("10/minute")
+async def create_project(request: Request, project_data: ProjectCreateRequest, user: AuthorizedUser) -> ProjectResponse:
     """Create a new project with comprehensive logging"""
     operation_start = time.time()
 
     print(f"📊 API: POST /projects - Starting request for user {user.sub}")
-    print(f"📝 API: Project details - repo: {request.repo_owner}/{request.repo_name}, url: {request.repo_url}")
+    print(f"📝 API: Project details - repo: {project_data.repo_owner}/{project_data.repo_name}, url: {project_data.repo_url}")
 
     conn = None
     try:
-        if not request.repo_name or not request.repo_owner:
+        if not project_data.repo_name or not project_data.repo_owner:
             print(f"❌ API: Invalid input - missing repo_name or repo_owner")
             raise HTTPException(status_code=400, detail="Repository name and owner are required")
 
@@ -468,14 +477,12 @@ async def create_project(request: ProjectCreateRequest, user: AuthorizedUser) ->
         conn = await get_db_connection()
         
         check_start = time.time()
-        print(f"🔍 Database: Checking for existing project {request.repo_owner}/{request.repo_name}")
-        
+        print(f"🔍 Database: Checking for existing project {project_data.repo_owner}/{project_data.repo_name}")        
         existing_query = """
             SELECT id FROM projects 
             WHERE user_id = $1 AND repo_owner = $2 AND repo_name = $3
         """
-        existing = await conn.fetchrow(existing_query, db_user_id, request.repo_owner, request.repo_name)
-        
+        existing = await conn.fetchrow(existing_query, db_user_id, project_data.repo_owner, project_data.repo_name)        
         check_time = (time.time() - check_start) * 1000
         print(f"✅ Database: Duplicate check completed in {check_time:.2f}ms")
         
@@ -483,7 +490,7 @@ async def create_project(request: ProjectCreateRequest, user: AuthorizedUser) ->
             print(f"⚠️ API: Project already exists with ID {existing['id']}")
             raise HTTPException(
                 status_code=409, 
-                detail=f"Project {request.repo_owner}/{request.repo_name} already exists"
+                detail=f"Project {project_data.repo_owner}/{project_data.repo_name} already exists"
             )
         
         insert_start = time.time()
@@ -498,9 +505,9 @@ async def create_project(request: ProjectCreateRequest, user: AuthorizedUser) ->
         new_project = await conn.fetchrow(
             insert_query,
             db_user_id,
-            request.repo_name,
-            request.repo_owner,
-            request.repo_url,
+            project_data.repo_name,
+            project_data.repo_owner,
+            project_data.repo_url,
             'github'
         )
         
@@ -546,13 +553,11 @@ async def create_project(request: ProjectCreateRequest, user: AuthorizedUser) ->
             print(f"🔌 Database: Connection closed")
 
 
-def convert_user_id_to_int(user_id: str) -> int:
-    """Convert string user ID to consistent integer for database compatibility"""
-    import hashlib
-    hash_bytes = hashlib.sha256(user_id.encode()).digest()
-    db_user_id = int.from_bytes(hash_bytes[:4], byteorder='big') % (2**31 - 1)
-    print(f"🔄 ID Conversion: {user_id} -> {db_user_id}")
-    return db_user_id
+def convert_user_id_to_uuid(user_id: str) -> str:
+    """Convert string user ID to UUID for database compatibility"""
+    print(f"🔄 ID Conversion: {user_id} -> {user_id} (UUID)")
+    return user_id
+
 
 
 @router.delete("/{project_id}")
@@ -707,7 +712,7 @@ async def get_project_files(project_id: int, user: AuthorizedUser, branch: str =
 
         import requests
 
-        github_token = user_record['github_access_token']
+        github_token = decrypt_token(user_record['github_access_token'])
         repo_owner = project_record['repo_owner']
         repo_name = project_record['repo_name']
 
@@ -863,7 +868,7 @@ async def get_file_content(project_id: int, file_path: str, user: AuthorizedUser
         import requests
         import base64
 
-        github_token = user_record['github_access_token']
+        github_token = decrypt_token(user_record['github_access_token'])
         repo_owner = project_record['repo_owner']
         repo_name = project_record['repo_name']
 
@@ -1165,168 +1170,3 @@ def validate_github_repository(repo_data: Dict[str, Any]) -> Dict[str, Any]:
             'has_description': bool(description)
         }
     }
-
-
-@router.post("/upload", response_model=FileUploadResponse)
-@rate_limit("5/minute")
-async def upload_project_files(
-    user: AuthorizedUser,
-    files: List[UploadFile] = File(...),
-    project_name: Optional[str] = Form(None)
-) -> FileUploadResponse:
-    """
-    Upload project files and create a new project.
-    Supports multiple files and basic project validation.
-    """
-    operation_start = time.time()
-    db_user_id = await get_or_create_user(user.sub)
-
-    print(f"📤 API: POST /upload - Starting upload for user {user.sub} (DB ID: {db_user_id})")
-    print(f"📁 API: Received {len(files)} files")
-
-    try:
-        files_metadata = []
-        total_size = 0
-
-        if len(files) > MAX_FILES_COUNT:
-            raise HTTPException(
-                status_code=413,
-                detail=f"Too many files: {len(files)} (max {MAX_FILES_COUNT})"
-            )
-
-        for file in files:
-            if not file.filename:
-                continue
-
-            filename_valid, filename_error = validate_filename_security(file.filename)
-            if not filename_valid:
-                raise HTTPException(
-                    status_code=400,
-                    detail=f"Security validation failed for {file.filename}: {filename_error}"
-                )
-
-            safe_filename = sanitize_filename(file.filename)
-
-            if not validate_file_extension(safe_filename):
-                raise HTTPException(
-                    status_code=400,
-                    detail=f"File type not allowed: {safe_filename}"
-                )
-
-            content = await file.read()
-            file_size = len(content)
-
-            if not validate_file_size(file_size):
-                raise HTTPException(
-                    status_code=413,
-                    detail=f"File too large: {safe_filename} ({file_size / 1024 / 1024:.1f}MB > {MAX_FILE_SIZE / 1024 / 1024}MB)"
-                )
-
-            content_valid, content_error = validate_file_content_security(content, safe_filename)
-            if not content_valid:
-                raise HTTPException(
-                    status_code=400,
-                    detail=f"Content security validation failed: {content_error}"
-                )
-
-            total_size += file_size
-
-            if total_size > MAX_TOTAL_SIZE:
-                raise HTTPException(
-                    status_code=413,
-                    detail=f"Total upload size too large ({total_size / 1024 / 1024:.1f}MB > {MAX_TOTAL_SIZE / 1024 / 1024}MB)"
-                )
-
-            files_metadata.append({
-                'filename': file.filename,
-                'size': file_size,
-                'hash': hashlib.sha256(content).hexdigest(),
-                'mime_type': mimetypes.guess_type(file.filename)[0]
-            })
-
-            await file.seek(0)
-
-        print(f"💾 API: Processed {len(files_metadata)} files ({total_size / 1024 / 1024:.1f}MB)")
-
-        validation_result = analyze_python_project_simple(files_metadata)
-        print(f"🔍 API: Project analysis - Python: {validation_result['is_python_project']}, Confidence: {validation_result['confidence_score']:.2f}")
-
-        if not validation_result['is_python_project']:
-            raise HTTPException(
-                status_code=400,
-                detail=f"Not a valid Python project (confidence: {validation_result['confidence_score']:.2f}). Errors: {', '.join(validation_result['errors'])}"
-            )
-
-        if validation_result['errors']:
-            raise HTTPException(
-                status_code=400,
-                detail=f"Project validation failed: {', '.join(validation_result['errors'])}"
-            )
-
-        if not project_name:
-            project_name = f"uploaded-project-{int(time.time())}"
-
-        conn = await get_db_connection()
-        try:
-            existing = await conn.fetchrow(
-                "SELECT id FROM projects WHERE user_id = $1 AND repo_name = $2",
-                db_user_id, project_name
-            )
-
-            if existing:
-                raise HTTPException(
-                    status_code=409,
-                    detail=f"Project '{project_name}' already exists"
-                )
-
-            project_id = await conn.fetchval(
-                """
-                INSERT INTO projects (user_id, repo_name, repo_owner, repo_url, project_source, upload_metadata, created_at)
-                VALUES ($1, $2, $3, $4, $5, $6, NOW())
-                RETURNING id
-                """,
-                db_user_id,
-                project_name,
-                user.email or "uploaded",
-                f"upload://{project_name}",
-                'upload',
-                validation_result
-            )
-
-            for i, file_meta in enumerate(files_metadata):
-                await conn.execute(
-                    """
-                    INSERT INTO project_files (project_id, filename, file_size, file_hash, mime_type, upload_order)
-                    VALUES ($1, $2, $3, $4, $5, $6)
-                    """,
-                    project_id,
-                    file_meta['filename'],
-                    file_meta['size'],
-                    file_meta['hash'],
-                    file_meta['mime_type'],
-                    i
-                )
-
-            print(f"✅ API: Created project with ID {project_id}")
-
-        finally:
-            await conn.close()
-
-        total_time = (time.time() - operation_start) * 1000
-        print(f"🎉 API: Upload completed successfully in {total_time:.2f}ms")
-
-        return FileUploadResponse(
-            project_id=project_id,
-            project_name=project_name,
-            files_processed=len(files_metadata),
-            total_size_bytes=total_size,
-            validation_results=validation_result,
-            created_at=time.strftime('%Y-%m-%dT%H:%M:%SZ')
-        )
-
-    except HTTPException:
-        raise
-    except Exception as e:
-        print(f"❌ API: Upload error: {str(e)}")
-        raise HTTPException(status_code=500, detail="Upload processing failed")
-
