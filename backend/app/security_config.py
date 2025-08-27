@@ -1,6 +1,5 @@
 import os
 from typing import Dict, List, Set
-from pathlib import Path
 PRODUCTION_MODE = os.getenv("APP_ENV", "development") == "production"
 class SecurityConfig:
     MAX_FILE_SIZE = 50 * 1024 * 1024 if PRODUCTION_MODE else 100 * 1024 * 1024
