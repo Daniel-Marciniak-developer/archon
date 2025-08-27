@@ -27,7 +27,7 @@ def get_router_config() -> dict:
 def is_auth_disabled(router_config: dict, name: str) -> bool:
     return router_config["routers"][name]["disableAuth"]
 def import_api_routers() -> APIRouter:
-    routes = APIRouter(prefix="/routes")
+    routes = APIRouter()
     router_config = get_router_config()
     src_path = pathlib.Path(__file__).parent
     apis_path = src_path / "app" / "apis"
@@ -53,13 +53,22 @@ def import_api_routers() -> APIRouter:
             if isinstance(public_router, APIRouter):
                 routes.include_router(public_router)
         except Exception as e:
+            print(f"❌ Error loading router {name}: {e}")
+            import traceback
+            traceback.print_exc()
             continue
     return routes
 def get_stack_auth_config() -> dict | None:
+    project_id = os.environ.get("STACK_AUTH_PROJECT_ID")
+    publishable_key = os.environ.get("STACK_AUTH_PUBLISHABLE_CLIENT_KEY")
+    jwks_url = os.environ.get("STACK_AUTH_JWKS_URL")
+    
+    print(f"DEBUG: Stack Auth config - project_id: {project_id}, jwks_url: {jwks_url}")
+    
     return {
-        "projectId": os.environ.get("STACK_AUTH_PROJECT_ID"),
-        "publishableClientKey": os.environ.get("STACK_AUTH_PUBLISHABLE_CLIENT_KEY"),
-        "jwksUrl": os.environ.get("STACK_AUTH_JWKS_URL"),
+        "projectId": project_id,
+        "publishableClientKey": publishable_key,
+        "jwksUrl": jwks_url,
     }
 def create_app() -> FastAPI:
     is_production = settings.is_production
