@@ -61,7 +61,15 @@ export default defineConfig({
 	plugins: [react(), splitVendorChunkPlugin(), tsConfigPaths(), injectHTML()],
 	server: {
 		proxy: {
-			"/routes": {
+			"/projects": {
+				target: "http://127.0.0.1:8000",
+				changeOrigin: true,
+			},
+			"/github": {
+				target: "http://127.0.0.1:8000",
+				changeOrigin: true,
+			},
+			"/reports": {
 				target: "http://127.0.0.1:8000",
 				changeOrigin: true,
 			},
