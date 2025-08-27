@@ -1,10 +1,10 @@
-from fastapi import APIRouter, HTTPException, Query, Request
-from fastapi.responses import RedirectResponse
+from fastapi import APIRouter, HTTPException, Request
 from pydantic import BaseModel
 from typing import Optional
-import requests
 import os
+import time
 from app.auth import AuthorizedUser
+from app.libs.encryption import encrypt_token, decrypt_token
 
 
 try:
@@ -54,12 +54,10 @@ async def get_github_connection_status(request: Request, user: AuthorizedUser) -
     try:
         from app.libs.database import get_db_connection
 
-        def convert_user_id_to_int(user_id: str) -> int:
-            import hashlib
-            hash_bytes = hashlib.sha256(user_id.encode()).digest()
-            return int.from_bytes(hash_bytes[:4], byteorder='big') % (2**31 - 1)
+        def convert_user_id_to_uuid(user_id: str) -> str:
+            return user_id
 
-        db_user_id = convert_user_id_to_int(user.sub)
+        db_user_id = convert_user_id_to_uuid(user.sub)
         print(f"🔗 GitHub: Checking connection status for user {user.sub} (DB ID: {db_user_id})")
 
         conn = await get_db_connection()
@@ -68,14 +66,19 @@ async def get_github_connection_status(request: Request, user: AuthorizedUser) -
                 "SELECT github_access_token, username, avatar_url FROM users WHERE id = $1",
                 db_user_id
             )
+            if not user_record:
+                print(f"🔍 GitHub: User ID {db_user_id} not found, checking for GitHub account to migrate...")
+                pass
 
             if user_record and user_record['github_access_token'] and user_record['github_access_token'] != 'mock-token':
-                print(f"✅ GitHub: User {user.sub} has valid access token")
-                return GitHubConnectionStatus(
-                    connected=True,
-                    username=user_record['username'],
-                    avatar_url=user_record['avatar_url']
-                )
+                decrypted_token = decrypt_token(user_record['github_access_token'])
+                if decrypted_token and decrypted_token != 'mock-token':
+                    print(f"✅ GitHub: User {user.sub} has valid access token")
+                    return GitHubConnectionStatus(
+                        connected=True,
+                        username=user_record['username'],
+                        avatar_url=user_record['avatar_url']
+                    )
             else:
                 print(f"❌ GitHub: User {user.sub} has no valid access token")
                 return GitHubConnectionStatus(
@@ -109,15 +112,24 @@ async def connect_github(request: Request, user: AuthorizedUser) -> GitHubAuthUr
             )
 
         import secrets
+        import redis
+        import json
+        
         state = secrets.token_urlsafe(32)
-
-        # TODO: Store state in database/session for verification
+        
+        redis_client = redis.from_url(os.getenv("REDIS_URL", "redis://redis:6379/0"))
+        state_data = {
+            "user_sub": user.sub,
+            "timestamp": int(time.time())
+        }
+        redis_client.setex(f"github_oauth_state:{state}", 600, json.dumps(state_data))
+        print(f"✅ GitHub: Generated and stored state {state} for user {user.sub}")
 
         github_oauth_url = (
             f"https://github.com/login/oauth/authorize"
             f"?client_id={github_client_id}"
             f"&redirect_uri={github_redirect_uri}"
-            f"&scope=repo,user:email"
+            f"&scope=public_repo,user:email"
             f"&state={state}"
             f"&allow_signup=true"
         )
@@ -150,8 +162,31 @@ async def github_oauth_callback(request: Request, user: AuthorizedUser):
 
         if not code:
             raise HTTPException(status_code=400, detail="Missing authorization code")
-
-        # TODO: Verify state parameter for security
+        
+        if not state:
+            raise HTTPException(status_code=400, detail="Missing state parameter")
+        
+        import redis
+        import json
+        redis_client = redis.from_url(os.getenv("REDIS_URL", "redis://redis:6379/0"))
+        
+        stored_state_data = redis_client.get(f"github_oauth_state:{state}")
+        if not stored_state_data:
+            print(f"❌ GitHub: State {state} not found in Redis for user {user.sub}")
+            raise HTTPException(status_code=400, detail="Invalid or expired state parameter")
+        
+        try:
+            state_data = json.loads(stored_state_data)
+        except json.JSONDecodeError as e:
+            print(f"❌ GitHub: Failed to decode state data: {e}")
+            raise HTTPException(status_code=400, detail="Invalid state format")
+            
+        if state_data["user_sub"] != user.sub:
+            print(f"❌ GitHub: State user mismatch. Expected: {user.sub}, Got: {state_data['user_sub']}")
+            raise HTTPException(status_code=400, detail="State parameter mismatch")
+        
+        redis_client.delete(f"github_oauth_state:{state}")
+        print(f"✅ GitHub: State {state} verified and deleted for user {user.sub}")
 
         github_client_id = os.getenv("GITHUB_CLIENT_ID")
         github_client_secret = os.getenv("GITHUB_CLIENT_SECRET")
@@ -208,27 +243,26 @@ async def github_oauth_callback(request: Request, user: AuthorizedUser):
 
             print(f"✅ GitHub: Successfully authenticated {github_username} (ID: {github_id})")
 
-            def convert_user_id_to_int(user_id: str) -> int:
-                import hashlib
-                hash_bytes = hashlib.sha256(user_id.encode()).digest()
-                return int.from_bytes(hash_bytes[:4], byteorder='big') % (2**31 - 1)
+            def convert_user_id_to_uuid(user_id: str) -> str:
+                return user_id
 
-            db_user_id = convert_user_id_to_int(user.sub)
+            db_user_id = convert_user_id_to_uuid(user.sub)
 
             conn = await get_db_connection()
             try:
+                encrypted_token = encrypt_token(access_token)
+                
                 await conn.execute(
                     """
                     INSERT INTO users (id, github_id, username, avatar_url, github_access_token)
                     VALUES ($1, $2, $3, $4, $5)
-                    ON CONFLICT (id) DO UPDATE SET
-                        github_id = EXCLUDED.github_id,
+                    ON CONFLICT (github_id) DO UPDATE SET
                         username = EXCLUDED.username,
                         avatar_url = EXCLUDED.avatar_url,
                         github_access_token = EXCLUDED.github_access_token,
                         updated_at = NOW()
                     """,
-                    db_user_id, github_id, github_username, github_user.get("avatar_url"), access_token
+                    db_user_id, github_id, github_username, github_user.get("avatar_url"), encrypted_token
                 )
 
                 print(f"✅ GitHub: Stored access token for user {user.sub} -> {github_username}")
@@ -249,7 +283,8 @@ async def github_oauth_callback(request: Request, user: AuthorizedUser):
         raise HTTPException(status_code=500, detail=f"GitHub callback failed: {str(e)}")
 
 @router.delete("/github/disconnect")
-async def disconnect_github(user: AuthorizedUser):
+@rate_limit("5/minute")
+async def disconnect_github(request: Request, user: AuthorizedUser):
     """
     GitHub disconnection is handled by Stack Auth.
     This endpoint just returns a message.
@@ -274,12 +309,10 @@ async def get_github_repositories(request: Request, user: AuthorizedUser):
         import httpx
         from app.libs.database import get_db_connection
 
-        def convert_user_id_to_int(user_id: str) -> int:
-            import hashlib
-            hash_bytes = hashlib.sha256(user_id.encode()).digest()
-            return int.from_bytes(hash_bytes[:4], byteorder='big') % (2**31 - 1)
+        def convert_user_id_to_uuid(user_id: str) -> str:
+            return user_id
 
-        db_user_id = convert_user_id_to_int(user.sub)
+        db_user_id = convert_user_id_to_uuid(user.sub)
         print(f"🔗 GitHub: Getting repositories for user {user.sub} (DB ID: {db_user_id})")
 
         conn = await get_db_connection()
@@ -337,8 +370,8 @@ async def get_github_repositories(request: Request, user: AuthorizedUser):
             ]
         }
 
-            github_token = user_record['github_access_token']
-            print(f"🔑 GitHub: Using access token to fetch real repositories for user {user.sub}")
+            github_token = decrypt_token(user_record['github_access_token'])
+            print(f"🔑 GitHub: Using decrypted access token to fetch real repositories for user {user.sub}")
 
             async with httpx.AsyncClient() as client:
                 headers = {
