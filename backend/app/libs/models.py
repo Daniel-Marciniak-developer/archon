@@ -2,6 +2,7 @@ from typing import Optional
 from datetime import datetime
 from pydantic import BaseModel, Field
 from enum import Enum
+from uuid import UUID
 class AnalysisStatus(str, Enum):
     PENDING = "pending"
     RUNNING = "running"
@@ -29,7 +30,7 @@ class UserUpdate(BaseModel):
     avatar_url: Optional[str] = None
     github_access_token: Optional[str] = None
 class User(UserBase):
-    id: int
+    id: UUID
     created_at: datetime
     updated_at: datetime
     class Config:
@@ -39,7 +40,7 @@ class ProjectBase(BaseModel):
     repo_owner: str = Field(..., max_length=255)
     repo_url: str
 class ProjectCreate(ProjectBase):
-    user_id: int
+    user_id: UUID
 class ProjectUpdate(BaseModel):
     repo_name: Optional[str] = Field(None, max_length=255)
     repo_owner: Optional[str] = Field(None, max_length=255)
@@ -47,7 +48,7 @@ class ProjectUpdate(BaseModel):
     last_analysis_id: Optional[int] = None
 class Project(ProjectBase):
     id: int
-    user_id: int
+    user_id: UUID
     last_analysis_id: Optional[int] = None
     created_at: datetime
     updated_at: datetime
