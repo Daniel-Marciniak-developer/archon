@@ -4,9 +4,9 @@ services:
     image: postgres:15
     container_name: archon-postgres
     environment:
-      POSTGRES_DB: archon_dev
-      POSTGRES_USER: archon_user
-      POSTGRES_PASSWORD: archon_password
+      POSTGRES_DB: ${POSTGRES_DB:-archon_dev}
+      POSTGRES_USER: ${POSTGRES_USER:-archon_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-archon_password}
       POSTGRES_INITDB_ARGS: "--encoding=UTF-8"
     ports:
       - "5432:5432"
@@ -16,12 +16,25 @@ services:
       - archon-network
     restart: unless-stopped
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U archon_user -d archon_dev"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-archon_user} -d ${POSTGRES_DB:-archon_dev}"]
       interval: 10s
       timeout: 5s
       retries: 5
 
-
+  # Redis Cache
+  redis:
+    image: redis:7-alpine
+    container_name: archon-redis
+    ports:
+      - "6379:6379"
+    networks:
+      - archon-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   # Backend API
   backend:
@@ -29,14 +42,12 @@ services:
       context: ./backend
       dockerfile: Dockerfile
     container_name: archon-backend
+    env_file:
+      - ./backend/.env
     environment:
-      - DATABASE_URL_DEV=postgresql://archon_user:archon_password@postgres:5432/archon_dev
-      - DATABASE_URL_ADMIN_DEV=postgresql://archon_user:archon_password@postgres:5432/archon_dev
-
+      - DATABASE_URL_DEV=postgresql://${POSTGRES_USER:-archon_user}:${POSTGRES_PASSWORD:-archon_password}@postgres:5432/${POSTGRES_DB:-archon_dev}
+      - DATABASE_URL_ADMIN_DEV=postgresql://${POSTGRES_USER:-archon_user}:${POSTGRES_PASSWORD:-archon_password}@postgres:5432/${POSTGRES_DB:-archon_dev}
       - ARCHON_SERVICE_TYPE=development
-      - STACK_AUTH_PROJECT_ID=97bafa9b-894f-4d26-9dd4-6f0f69c41954
-      - STACK_AUTH_PUBLISHABLE_CLIENT_KEY=pck_qz8nx0vvfaadked7dkqzg4whks8gzga6bb6txf10m9z4r
-      - STACK_AUTH_JWKS_URL=https://api.stack-auth.com/api/v1/projects/97bafa9b-894f-4d26-9dd4-6f0f69c41954/.well-known/jwks.json
     ports:
       - "8000:8000"
     volumes:
@@ -46,6 +57,8 @@ services:
       - archon-network
     depends_on:
       postgres:
+        condition: service_healthy
+      redis:
         condition: service_healthy
     restart: unless-stopped
     command: uvicorn main:app --host 0.0.0.0 --port 8000 --reload
