@@ -2,29 +2,34 @@
 File upload API endpoints for project creation from uploaded files.
 Handles multipart file uploads, validation, and project creation.
 """
-import os
 import tempfile
 import shutil
-import zipfile
 import mimetypes
 from pathlib import Path
 from typing import List, Optional, Dict, Any
-import asyncio
 import time
 import hashlib
 
-from fastapi import APIRouter, UploadFile, File, Form, HTTPException, Depends
-from fastapi.responses import JSONResponse
-from pydantic import BaseModel, Field
-import asyncpg
+from fastapi import APIRouter, UploadFile, File, Form, HTTPException, Request
+from pydantic import BaseModel
 
 from app.auth import AuthorizedUser
-from app.apis.projects import get_db_connection, convert_user_id_to_int
+from app.apis.projects import get_db_connection, convert_user_id_to_uuid
+
+try:
+    from slowapi import Limiter
+    from slowapi.util import get_remote_address
+    limiter = Limiter(key_func=get_remote_address)
+    RATE_LIMITING_AVAILABLE = True
+except ImportError:
+    limiter = None
+    RATE_LIMITING_AVAILABLE = False
 
 def rate_limit(limit_string):
     """Decorator that applies rate limiting if available, otherwise does nothing"""
     def decorator(func):
-        # TODO: Implement proper rate limiting when slowapi is available
+        if RATE_LIMITING_AVAILABLE and limiter:
+            return limiter.limit(limit_string)(func)
         return func
     return decorator
 
@@ -237,16 +242,17 @@ async def save_uploaded_files(files: List[UploadFile], temp_dir: Path) -> Dict[s
 @router.post("/upload", response_model=FileUploadResponse)
 @rate_limit("10/minute")
 async def upload_project_files(
+    request: Request,
+    user: AuthorizedUser,
     files: List[UploadFile] = File(...),
-    project_name: Optional[str] = Form(None),
-    user: AuthorizedUser = Depends()
+    project_name: Optional[str] = Form(None)
 ) -> FileUploadResponse:
     """
     Upload project files and create a new project.
     Supports multiple files and basic project validation.
     """
     operation_start = time.time()
-    db_user_id = convert_user_id_to_int(user.sub)
+    db_user_id = convert_user_id_to_uuid(user.sub)
     temp_dir = None
     
     print(f"📤 API: POST /upload - Starting upload for user {user.sub} (DB ID: {db_user_id})")
