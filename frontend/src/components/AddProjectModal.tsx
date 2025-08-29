@@ -394,59 +394,20 @@ export function AddProjectModal({ open, onOpenChange, onProjectAdded, existingPr
           </TabsContent>
 
           <TabsContent value="upload" className="space-y-4 mt-4">
-            <div className="space-y-4">
-              <div className="text-center">
-                <FolderOpen className="w-12 h-12 crystal-text-electric mx-auto mb-3" />
-                <h3 className="text-lg font-semibold crystal-text-primary mb-2">
-                  Upload Your Python Project
-                </h3>
-                <p className="crystal-text-secondary">
-                  Upload your local Python project files for analysis. We support individual files or entire project folders.
-                </p>
+            <div className="space-y-8 flex flex-col items-center justify-center min-h-[300px]">
+              <FolderOpen className="w-12 h-12 crystal-text-electric mx-auto mb-3" />
+              <h3 className="text-lg font-semibold crystal-text-primary mb-2">
+                Upload Your Python Project
+              </h3>
+              <p className="crystal-text-secondary">
+                <span className="font-semibold text-crystal-warning">Coming soon</span> – file upload is currently disabled.<br/>
+                Please use GitHub import for now.
+              </p>
+              <div className="mt-4">
+                <Button disabled className="opacity-60 cursor-not-allowed">
+                  <Upload className="w-4 h-4 mr-2" /> Upload Files
+                </Button>
               </div>
-
-              {uploadError && (
-                <Card className="crystal-card crystal-border-critical bg-crystal-critical/5">
-                  <CardContent className="pt-4">
-                    <div className="flex items-center space-x-2 crystal-text-critical">
-                      <AlertCircle className="w-4 h-4" />
-                      <span className="text-sm">{uploadError}</span>
-                    </div>
-                  </CardContent>
-                </Card>
-              )}
-
-              <FileUploadZone
-                onFilesSelected={handleFilesSelected}
-                onUploadStart={handleUploadStart}
-                onUploadProgress={handleUploadProgress}
-                onUploadComplete={handleUploadComplete}
-                onUploadError={handleUploadError}
-                disabled={isUploading}
-              />
-
-              {isUploading && (
-                <Card className="crystal-card crystal-border-electric bg-crystal-electric/5">
-                  <CardContent className="pt-4">
-                    <div className="space-y-2">
-                      <div className="flex items-center justify-between">
-                        <span className="text-sm font-medium crystal-text-primary">
-                          Uploading project...
-                        </span>
-                        <span className="text-sm crystal-text-secondary">
-                          {Math.round(uploadProgress)}%
-                        </span>
-                      </div>
-                      <div className="crystal-progress h-2">
-                        <div
-                          className="crystal-progress-bar"
-                          style={{ width: `${uploadProgress}%` }}
-                        />
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              )}
             </div>
           </TabsContent>
         </Tabs>
