@@ -9,6 +9,7 @@ import { MainLayout } from "components/MainLayout";
 import ReportPageSkeleton from "components/ReportPageSkeleton";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
+import { useProjects } from "utils/useProjects";
 
 const ProjectReportPage = () => {
   const [searchParams] = useSearchParams();
@@ -21,6 +22,8 @@ const ProjectReportPage = () => {
   const [report, setReport] = useState<ProjectReport | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  
+  useProjects();
 
 
 
@@ -73,8 +76,9 @@ const ProjectReportPage = () => {
   return (
     <MainLayout>
       <div className="min-h-screen bg-crystal-void">
-        <div className="max-w-7xl mx-auto p-6 lg:p-8 space-y-8">
-          <div className="flex items-center justify-between">
+        <div className="w-full px-6 py-8 space-y-8">
+          {/* Back Button - Full Width */}
+          <div className="bg-crystal-void/50 border border-crystal-electric/20 rounded-xl p-4">
             <Button
               onClick={handleBackToDashboard}
               variant="outline"
@@ -85,9 +89,12 @@ const ProjectReportPage = () => {
             </Button>
           </div>
 
-          <ReportHeader report={report} />
-          <IssuesSummary issues={report.issues} />
-          <IssuesList issues={report.issues} />
+          {/* Report Content - Full Width */}
+          <div className="w-full space-y-8">
+            <ReportHeader report={report} />
+            <IssuesSummary issues={report.issues} />
+            <IssuesList issues={report.issues} />
+          </div>
         </div>
       </div>
     </MainLayout>
