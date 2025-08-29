@@ -99,21 +99,28 @@ const Dashboard = () => {
 
   return (
     <MainLayout>
-      <div className="p-8">
-        <div className="flex items-center justify-between mb-8">
-          <h1 className="text-3xl font-bold text-crystal-text-primary">
-            Dashboard
-          </h1>
-          <Button
-            className="crystal-button-violet"
-            onClick={() => handleAddProject()}
-          >
-            <PlusCircle className="w-4 h-4 mr-2" />
-            Add New Project
-          </Button>
-        </div>
+      <div className="min-h-screen bg-crystal-void">
+        <div className="w-full px-6 py-8 space-y-8">
+          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6 bg-crystal-void/50 border border-crystal-electric/20 rounded-xl p-6">
+            <div>
+              <h1 className="text-3xl font-bold text-crystal-text mb-2">Projects Dashboard</h1>
+              <p className="text-crystal-text/70">
+                Manage and analyze your code repositories with AI-powered insights
+              </p>
+            </div>
+            <Button
+              className="crystal-button-violet flex items-center gap-2 px-6 py-3"
+              onClick={() => handleAddProject()}
+            >
+              <PlusCircle className="w-5 h-5" />
+              Add New Project
+            </Button>
+          </div>
 
-        <RenderContent />
+          <div className="w-full">
+            <RenderContent />
+          </div>
+        </div>
       </div>
       <AddProjectModal
         open={isModalOpen}
