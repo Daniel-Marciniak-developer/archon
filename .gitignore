@@ -3,6 +3,7 @@
 .env.local
 .env.production
 .env.staging
+.github/
 
 # Docker
 docker-compose.override.yml
