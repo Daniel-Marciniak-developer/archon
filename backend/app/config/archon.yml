@@ -1,0 +1,74 @@
+project:
+  name: "archon"
+  version: "1.0.0"
+
+analysis:
+  paths:
+    include: ["app", "src", "backend"]
+    exclude: ["tests", "build", ".venv", "__pycache__", "node_modules"]
+  
+  thresholds:
+    radon:
+      cc_warn: 10
+      cc_critical: 15
+      mi_warn: 60
+      mi_critical: 40
+    
+    jscpd:
+      duplicate_threshold: 5
+      min_tokens: 50
+    
+    pydeps:
+      fan_in_hub: 15
+      fan_out_hub: 15
+      max_depth: 8
+    
+    libcst:
+      max_function_length: 50
+      max_class_length: 200
+      max_parameters: 8
+
+  structure:
+    layers:
+      order: ["apis", "analyzers", "libs", "models"]
+      forbidden_imports:
+        apis: ["libs.database"]
+        analyzers: ["apis"]
+    
+    naming_policy:
+      file_regex: "^[a-z0-9_]+\\.py$"
+      class_regex: "^[A-Z][A-Za-z0-9]*$"
+      function_regex: "^[a-z_][a-z0-9_]*$"
+      constant_regex: "^[A-Z][A-Z0-9_]*$"
+      forbid_suffixes: ["_utils.py", "_helper.py"]
+    
+    domain_glossary: 
+      - "analysis"
+      - "analyzer"
+      - "security"
+      - "quality" 
+      - "structure"
+      - "report"
+      - "project"
+      - "issue"
+
+ai:
+  model: "CodeLlama-34b-Python"
+  enabled: true
+  top_n_hotspots: 20
+  confidence_threshold: 0.6
+  batch_size: 10
+
+scoring:
+  weights:
+    complexity: 0.35
+    maintainability: 0.20
+    duplication: 0.15
+    coupling: 0.15
+    cohesion: 0.10
+    cycles: 0.05
+
+cache:
+  enabled: true
+  ttl_hours: 24
+  incremental: true
