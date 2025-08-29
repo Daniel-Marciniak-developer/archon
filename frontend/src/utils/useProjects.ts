@@ -1,12 +1,15 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import brain from 'brain';
 import { ProjectResponse } from 'types';
+import useGlobalLoading from '@/hooks/useGlobalLoading';
 
 export function useProjects() {
   const [projects, setProjects] = useState<ProjectResponse[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const projectsRef = useRef<ProjectResponse[]>([]);
+  const previousRunningAnalysisRef = useRef<boolean>(false);
+  const { hideLoading } = useGlobalLoading();
 
   const fetchProjects = useCallback(async (showLoading = true) => {
     if (showLoading) setLoading(true);
@@ -39,13 +42,19 @@ export function useProjects() {
         (project.latest_analysis.status === 'pending' || project.latest_analysis.status === 'running')
       );
 
+      if (previousRunningAnalysisRef.current && !hasRunningAnalysis) {
+        hideLoading();
+      }
+
+      previousRunningAnalysisRef.current = hasRunningAnalysis;
+
       if (hasRunningAnalysis) {
         fetchProjects(false);
       }
     }, 3000);
 
     return () => clearInterval(interval);
-  }, [fetchProjects]);
+  }, [fetchProjects, hideLoading]);
 
   const refetch = useCallback(() => {
     fetchProjects();
