@@ -1,6 +1,5 @@
 FROM python:3.11-slim as builder
 
-# Install system dependencies needed for compilation and analysis tools
 RUN apt-get update && apt-get install -y \
     gcc \
     g++ \
@@ -12,12 +11,10 @@ RUN apt-get update && apt-get install -y \
     liblapack-dev \
     && rm -rf /var/lib/apt/lists/*
 
-# Install jscpd globally for JavaScript/TypeScript code duplication analysis
 RUN npm install -g jscpd
 
 WORKDIR /app
 
-# Install Python dependencies in layers for better caching
 COPY requirements-base.txt .
 RUN pip install --user --no-cache-dir -r requirements-base.txt
 
@@ -26,7 +23,6 @@ RUN pip install --user --no-cache-dir -r requirements-app.txt
 
 FROM python:3.11-slim as runner
 
-# Install runtime dependencies
 RUN apt-get update && apt-get install -y \
     git \
     curl \
@@ -36,10 +32,8 @@ RUN apt-get update && apt-get install -y \
     liblapack-dev \
     && rm -rf /var/lib/apt/lists/*
 
-# Install jscpd globally in the runner stage for code analysis
 RUN npm install -g jscpd
 
-# Create non-root user for security
 RUN useradd --create-home --shell /bin/bash app
 
 WORKDIR /app

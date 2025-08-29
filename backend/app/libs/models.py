@@ -58,6 +58,10 @@ class ToolName(str, Enum):
     RUFF = "ruff"
     BANDIT = "bandit"
     RADON = "radon"
+    JSCPD = "jscpd"
+    PYDEPS = "pydeps"
+    LIBCST = "libcst"
+    IMPORT_LINTER = "import_linter"
     CUSTOM = "custom"
 class AnalysisBase(BaseModel):
     status: AnalysisStatus = AnalysisStatus.PENDING
@@ -83,6 +87,15 @@ class Analysis(AnalysisBase):
     completed_at: Optional[datetime] = None
     class Config:
         from_attributes = True
+
+class StructureMetrics(BaseModel):
+    """Metrics for structure analysis"""
+    cyclomatic_complexity: Optional[float] = None
+    maintainability_index: Optional[float] = None
+    sloc: Optional[int] = None
+    duplicate_tokens: Optional[int] = None
+    duplicate_files: Optional[list[str]] = None
+
 class IssueBase(BaseModel):
     category: IssueCategory
     severity: IssueSeverity
@@ -95,6 +108,7 @@ class IssueBase(BaseModel):
     end_line: Optional[int] = Field(None, gt=0)
     start_column: Optional[int] = Field(None, ge=0)
     end_column: Optional[int] = Field(None, ge=0)
+    metrics: Optional[StructureMetrics] = None
 class IssueCreate(IssueBase):
     analysis_id: int
 class IssueUpdate(BaseModel):
@@ -128,5 +142,44 @@ class UserWithProjects(User):
 class AnalysisConfig(BaseModel):
     enable_ruff: bool = True
     enable_bandit: bool = True
+    enable_radon: bool = True
+    enable_jscpd: bool = True
+    enable_pydeps: bool = True
+    enable_libcst: bool = True
     ruff_config: Optional[str] = None
     bandit_config: Optional[str] = None
+
+
+class StructureMetrics(BaseModel):
+    """Metrics specific to structure analysis"""
+    complexity: Optional[float] = None
+    maintainability_index: Optional[float] = None
+    sloc: Optional[int] = None
+    duplicate_tokens: Optional[int] = None
+    fan_in: Optional[int] = None
+    fan_out: Optional[int] = None
+    cohesion: Optional[float] = None
+    cyclomatic_complexity: Optional[float] = None
+    function_length: Optional[int] = None
+    parameter_count: Optional[int] = None
+
+
+class PerFileStructure(BaseModel):
+    """Aggregated structure data for a single file"""
+    file_path: str
+    summary: dict
+    structure_issues: list[dict]
+    related: dict
+    hotspot_score: float = Field(ge=0.0, le=1.0)
+
+
+class HotspotFile(BaseModel):
+    """File identified as structural hotspot"""
+    file_path: str
+    score: float = Field(ge=0.0, le=1.0)
+    complexity_score: float
+    maintainability_score: float
+    coupling_score: float
+    duplication_score: float
+    issues_count: int
+    priority: str

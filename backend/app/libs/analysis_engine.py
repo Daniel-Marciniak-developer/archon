@@ -4,6 +4,8 @@ from app.libs.models import IssueBase
 from app.analyzers.quality import RuffAnalyzer
 from app.analyzers.security import BanditAnalyzer
 from app.analyzers.structure.radon_analyzer import RadonAnalyzer
+from app.analyzers.structure.jscpd_analyzer import JSCPDAnalyzer
+from app.libs.structure_scorer import StructureScorer
 
 logger = logging.getLogger(__name__)
 
@@ -26,7 +28,9 @@ class AnalysisEngine:
             RuffAnalyzer(),
             BanditAnalyzer(),
             RadonAnalyzer(),
+            JSCPDAnalyzer(),
         ]
+        self.structure_scorer = StructureScorer()
         self.logger = logging.getLogger(f"{__name__}.AnalysisEngine")
 
     def run_analysis(self, project_path: str) -> Dict[str, Any]:
@@ -49,17 +53,20 @@ class AnalysisEngine:
                 continue
 
         scores = self._calculate_scores(all_issues)
+        structure_analysis = self.structure_scorer.calculate_structure_score(all_issues)
         issues_dict = [self._issue_to_dict(issue) for issue in all_issues]
 
         report = {
             "overall_score": scores["overall_score"],
-            "structure_score": scores["Structure"],
+            "structure_score": structure_analysis["structure_score"],
             "quality_score": scores["Quality"],
             "security_score": scores["Security"],
+            "structure_analysis": structure_analysis,
             "issues": issues_dict
         }
 
         self.logger.info(f"Analysis complete. Found {len(all_issues)} total issues. Overall score: {scores['overall_score']:.1f}")
+        self.logger.info(f"Structure hotspots found: {len(structure_analysis.get('hotspot_files', []))}")
         return report
 
     def _calculate_scores(self, issues: List[IssueBase]) -> Dict[str, float]:
@@ -105,6 +112,27 @@ class AnalysisEngine:
             result["start_column"] = issue.start_column
         if issue.end_column is not None:
             result["end_column"] = issue.end_column
+
+        if hasattr(issue, 'metrics') and issue.metrics:
+            metrics_dict = {}
+            if issue.metrics.complexity is not None:
+                metrics_dict["complexity"] = issue.metrics.complexity
+            if issue.metrics.maintainability_index is not None:
+                metrics_dict["maintainability_index"] = issue.metrics.maintainability_index
+            if issue.metrics.sloc is not None:
+                metrics_dict["sloc"] = issue.metrics.sloc
+            if issue.metrics.duplicate_tokens is not None:
+                metrics_dict["duplicate_tokens"] = issue.metrics.duplicate_tokens
+            if issue.metrics.cyclomatic_complexity is not None:
+                metrics_dict["cyclomatic_complexity"] = issue.metrics.cyclomatic_complexity
+            if issue.metrics.function_length is not None:
+                metrics_dict["function_length"] = issue.metrics.function_length
+            
+            if metrics_dict:
+                result["metrics"] = metrics_dict
+
+        if hasattr(issue, 'related') and issue.related:
+            result["related"] = issue.related
 
         return result
 
