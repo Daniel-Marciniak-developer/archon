@@ -75,7 +75,7 @@ class AnalysisUpdate(BaseModel):
     structure_score: Optional[float] = Field(None, ge=0, le=100)
     quality_score: Optional[float] = Field(None, ge=0, le=100)
     security_score: Optional[float] = Field(None, ge=0, le=100)
-    dependencies_score: Optional[float] = Field(None, ge=0, le=100)
+
 class Analysis(AnalysisBase):
     id: int
     project_id: int

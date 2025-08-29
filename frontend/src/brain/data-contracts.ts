@@ -109,8 +109,6 @@ export interface ProjectReport {
   
   security_score: number;
   
-  dependencies_score: number;
-  
   issues: Issue[];
 }
 

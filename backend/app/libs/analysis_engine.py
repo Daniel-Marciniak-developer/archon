@@ -15,9 +15,9 @@ SEVERITY_PENALTIES = {
 }
 
 CATEGORY_WEIGHTS = {
-    "Structure": 0.4,
+    "Structure": 0.3,
     "Quality": 0.35,
-    "Security": 0.25,
+    "Security": 0.35,
 }
 
 class AnalysisEngine:

@@ -8,7 +8,7 @@ import {
   RadialBar,
   PolarAngleAxis,
 } from "recharts";
-import { Shield, Code, Layers, Package } from "lucide-react";
+import { Shield, Code, Layers } from "lucide-react";
 import { getSeverityCount, getCategoryCount } from "utils/severity";
 
 interface Props {
@@ -43,29 +43,26 @@ const ReportHeader = ({ report }: Props) => {
       icon: Layers,
       issues: getCategoryCount(report.issues, "structure"),
       description: "Code organization and architecture",
-      comingSoon: true
+      gradient: "from-blue-500 to-purple-600",
+      bgClass: "bg-gradient-to-br from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20"
     },
     {
-      name: "Quality",
+      name: "Quality", 
       score: report.quality_score,
       icon: Code,
       issues: getCategoryCount(report.issues, "quality"),
-      description: "Code style and best practices"
+      description: "Code style and best practices",
+      gradient: "from-green-500 to-emerald-600",
+      bgClass: "bg-gradient-to-br from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20"
     },
     {
       name: "Security",
       score: report.security_score,
       icon: Shield,
-      issues: getCategoryCount(report.issues, "security"),
-      description: "Security vulnerabilities and risks"
-    },
-    {
-      name: "Dependencies",
-      score: report.dependencies_score,
-      icon: Package,
-      issues: getCategoryCount(report.issues, "dependencies"),
-      description: "Package and dependency management",
-      comingSoon: true
+      issues: getCategoryCount(report.issues, "security"),  
+      description: "Security vulnerabilities and risks",
+      gradient: "from-red-500 to-orange-600",
+      bgClass: "bg-gradient-to-br from-red-50 to-orange-50 dark:from-red-900/20 dark:to-orange-900/20"
     }
   ];
 
@@ -120,18 +117,25 @@ const ReportHeader = ({ report }: Props) => {
           </CardContent>
         </Card>
 
-        <div className="lg:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-6">
+        <div className="lg:col-span-2 grid grid-cols-1 md:grid-cols-3 gap-6">
           {categories.map((category) => {
             const IconComponent = category.icon;
             return (
-              <Card key={category.name} className="crystal-glass border-crystal-border">
+              <Card key={category.name} className={`crystal-glass border-crystal-border hover:shadow-lg transition-all duration-300 ${category.bgClass}`}>
                 <CardContent className="p-6">
                   <div className="flex items-center justify-between mb-4">
                     <div className="flex items-center space-x-3">
-                      <IconComponent className="w-5 h-5 text-crystal-electric" />
-                      <h3 className="font-semibold text-crystal-text-primary">
-                        {category.name}
-                      </h3>
+                      <div className={`p-2 rounded-lg bg-gradient-to-r ${category.gradient}`}>
+                        <IconComponent className="w-5 h-5 text-white" />
+                      </div>
+                      <div>
+                        <h3 className="font-semibold text-crystal-text-primary">
+                          {category.name}
+                        </h3>
+                        <p className="text-xs text-crystal-text-secondary">
+                          {category.description}
+                        </p>
+                      </div>
                     </div>
                     <span className="text-2xl font-bold text-crystal-text-primary">
                       {category.score.toFixed(0)}%
@@ -146,10 +150,13 @@ const ReportHeader = ({ report }: Props) => {
                       {category.issues} issues
                     </span>
                     <span
-                      className="text-sm font-medium"
-                      style={{ color: getScoreColor(category.score) }}
+                      className="text-sm font-medium px-2 py-1 rounded-full"
+                      style={{ 
+                        color: getScoreColor(category.score),
+                        backgroundColor: `${getScoreColor(category.score)}20`
+                      }}
                     >
-                      {(category as any).comingSoon ? "Coming Soon 😉" : getScoreStatus(category.score)}
+                      {getScoreStatus(category.score)}
                     </span>
                   </div>
                 </CardContent>

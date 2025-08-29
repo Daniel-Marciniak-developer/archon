@@ -75,7 +75,6 @@ class BanditAnalyzer(BaseAnalyzer):
         if not output.strip():
             return []
 
-        # Extract JSON from output (ignore log lines that might be mixed in)
         json_start = output.find('{')
         if json_start == -1:
             self.logger.error("No JSON found in Bandit output")
@@ -239,7 +238,7 @@ class BanditAnalyzer(BaseAnalyzer):
             "bandit",
             "-r", ".",
             "-f", "json",
-            "-q",  # Quiet mode instead of verbose
+            "-q",
         ]
 
         if severity_level != "all":

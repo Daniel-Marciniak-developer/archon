@@ -19,7 +19,6 @@ const IssuesSummary = ({ issues }: Props) => {
   const structureCount = getCategoryCount(issues, "structure");
   const qualityCount = getCategoryCount(issues, "quality");
   const securityCount = getCategoryCount(issues, "security");
-  const dependenciesCount = getCategoryCount(issues, "dependencies");
 
   const severityStats = [
     {
@@ -59,8 +58,7 @@ const IssuesSummary = ({ issues }: Props) => {
   const categoryStats = [
     { name: "Structure", count: structureCount },
     { name: "Quality", count: qualityCount },
-    { name: "Security", count: securityCount },
-    { name: "Dependencies", count: dependenciesCount }
+    { name: "Security", count: securityCount }
   ];
 
   return (

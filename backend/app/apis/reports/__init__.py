@@ -43,7 +43,6 @@ class ProjectReport(BaseModel):
     structure_score: float
     quality_score: float
     security_score: float
-    dependencies_score: float
     issues: List[Issue]
 
 def clean_file_path(file_path: str) -> str:
@@ -131,7 +130,6 @@ async def load_real_report_data(project_id: int) -> ProjectReport:
             structure_score=data.get("structure_score", 0.0),
             quality_score=data.get("quality_score", 0.0),
             security_score=data.get("security_score", 0.0),
-            dependencies_score=data.get("dependencies_score", 0.0),
             issues=issues
         )
 
@@ -153,7 +151,6 @@ async def create_fallback_report(project_id: int) -> ProjectReport:
         structure_score=100.0,
         quality_score=100.0,
         security_score=100.0,
-        dependencies_score=100.0,
         issues=[]
     )
 

@@ -82,7 +82,6 @@ async def run_real_analysis(project_id: int, analysis_id: int):
                     "structure_score": 100.0,
                     "quality_score": 100.0,
                     "security_score": 100.0,
-                    "dependencies_score": 100.0,
                     "issues": []
                 }
             else:
@@ -97,7 +96,6 @@ async def run_real_analysis(project_id: int, analysis_id: int):
                 "structure_score": 100.0,
                 "quality_score": 100.0,
                 "security_score": 100.0,
-                "dependencies_score": 100.0,
                 "issues": []
             }
             print(f"✅ Created fallback perfect score report for project {project_id}")
@@ -110,7 +108,6 @@ async def run_real_analysis(project_id: int, analysis_id: int):
         structure_score = report['structure_score']
         quality_score = report['quality_score']
         security_score = report['security_score']
-        dependencies_score = report['dependencies_score']
 
         await conn.execute(
             """
@@ -120,16 +117,14 @@ async def run_real_analysis(project_id: int, analysis_id: int):
                 overall_score = $2,
                 structure_score = $3,
                 quality_score = $4,
-                security_score = $5,
-                dependencies_score = $6
-            WHERE id = $7
+                security_score = $5
+            WHERE id = $6
             """,
             datetime.now(),
             overall_score,
             structure_score,
             quality_score,
             security_score,
-            dependencies_score,
             analysis_id
         )
 

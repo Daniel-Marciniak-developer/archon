@@ -91,7 +91,6 @@ async def run_project_analysis(project_id: int, analysis_id: int, repo_url: str)
                     "structure_score": 100.0,
                     "quality_score": 100.0,
                     "security_score": 100.0,
-                    "dependencies_score": 100.0,
                     "issues": []
                 }
             else:
@@ -106,7 +105,6 @@ async def run_project_analysis(project_id: int, analysis_id: int, repo_url: str)
                 "structure_score": 100.0,
                 "quality_score": 100.0,
                 "security_score": 100.0,
-                "dependencies_score": 100.0,
                 "issues": []
             }
             print(f"✅ Created fallback perfect score report for project {project_id}")
@@ -119,7 +117,6 @@ async def run_project_analysis(project_id: int, analysis_id: int, repo_url: str)
         structure_score = report['structure_score']
         quality_score = report['quality_score']
         security_score = report['security_score']
-        dependencies_score = report['dependencies_score']
 
         await conn.execute(
             """
@@ -129,16 +126,14 @@ async def run_project_analysis(project_id: int, analysis_id: int, repo_url: str)
                 overall_score = $2,
                 structure_score = $3,
                 quality_score = $4,
-                security_score = $5,
-                dependencies_score = $6
-            WHERE id = $7
+                security_score = $5
+            WHERE id = $6
             """,
             datetime.now(),
             overall_score,
             structure_score,
             quality_score,
             security_score,
-            dependencies_score,
             analysis_id
         )
         await conn.execute(
@@ -324,7 +319,7 @@ async def get_projects(request: Request, user: AuthorizedUser) -> List[ProjectRe
             SELECT p.id, p.repo_name, p.repo_owner, p.repo_url, p.project_source,
                    p.upload_metadata, p.last_analysis_id, p.created_at as project_created_at,
                    a.overall_score, a.structure_score, a.quality_score,
-                   a.security_score, a.dependencies_score, a.status as analysis_status,
+                   a.security_score, a.status as analysis_status,
                    a.created_at as analysis_created_at, a.completed_at as analysis_completed_at
             FROM projects p
             LEFT JOIN analyses a ON p.last_analysis_id = a.id
@@ -355,7 +350,6 @@ async def get_projects(request: Request, user: AuthorizedUser) -> List[ProjectRe
                     "structure_score": float(row["structure_score"]) if row["structure_score"] is not None else None,
                     "quality_score": float(row["quality_score"]) if row["quality_score"] is not None else None,
                     "security_score": float(row["security_score"]) if row["security_score"] is not None else None,
-                    "dependencies_score": float(row["dependencies_score"]) if row["dependencies_score"] is not None else None,
                     "status": row["analysis_status"],
                     "created_at": row["analysis_created_at"].isoformat() if row["analysis_created_at"] else None,
                     "completed_at": row["analysis_completed_at"].isoformat() if row["analysis_completed_at"] else None
@@ -640,8 +634,8 @@ async def start_analysis(project_id: int, user: AuthorizedUser):
         
         analysis_id = await conn.fetchval(
             """
-            INSERT INTO analyses (project_id, status, created_at, overall_score, structure_score, quality_score, security_score, dependencies_score)
-            VALUES ($1, 'pending', NOW(), 0, 0, 0, 0, 0)
+            INSERT INTO analyses (project_id, status, created_at, overall_score, structure_score, quality_score, security_score)
+            VALUES ($1, 'pending', NOW(), 0, 0, 0, 0)
             RETURNING id
             """,
             project_id
