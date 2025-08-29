@@ -1,0 +1,66 @@
+{
+  "$id": "naming_audit.schema.json",
+  "type": "object",
+  "required": ["id", "project_id", "symbol", "kind", "file", "classification", "commit"],
+  "properties": {
+    "id": {
+      "type": "string",
+      "description": "Deterministic UUID5 based on file|symbol|line|commit"
+    },
+    "project_id": {
+      "type": "integer"
+    },
+    "symbol": {
+      "type": "string"
+    },
+    "kind": {
+      "type": "string",
+      "enum": ["class", "function", "variable", "module", "parameter"]
+    },
+    "file": {
+      "type": "string"
+    },
+    "classification": {
+      "type": "string",
+      "enum": ["misleading", "inconsistent", "ambiguous", "ok"]
+    },
+    "proposals": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "confidence": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1
+          },
+          "reason": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "why": {
+      "type": "string"
+    },
+    "confidence": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1
+    },
+    "priority": {
+      "type": "string",
+      "enum": ["high", "medium", "low"]
+    },
+    "commit": {
+      "type": "string"
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time"
+    }
+  }
+}

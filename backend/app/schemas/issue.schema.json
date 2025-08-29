@@ -1,0 +1,55 @@
+{
+  "$id": "issue.schema.json",
+  "type": "object",
+  "required": ["id", "project_id", "tool", "category", "file", "severity", "message", "commit"],
+  "properties": {
+    "id": {
+      "type": "string",
+      "description": "Deterministic UUID5 based on tool|file|symbol|line|commit"
+    },
+    "project_id": {
+      "type": "integer"
+    },
+    "tool": {
+      "type": "string",
+      "enum": ["radon", "jscpd", "pydeps", "import_linter", "libcst", "pycg", "ruff", "bandit"]
+    },
+    "category": {
+      "type": "string",
+      "enum": ["structure", "quality", "security", "dependencies"]
+    },
+    "file": {
+      "type": "string"
+    },
+    "symbol": {
+      "type": "string"
+    },
+    "line": {
+      "type": "integer"
+    },
+    "end_line": {
+      "type": "integer"
+    },
+    "severity": {
+      "type": "string",
+      "enum": ["critical", "high", "medium", "low"]
+    },
+    "metrics": {
+      "type": "object"
+    },
+    "message": {
+      "type": "string"
+    },
+    "suggestion": {
+      "type": "string"
+    },
+    "commit": {
+      "type": "string",
+      "description": "Git commit SHA"
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time"
+    }
+  }
+}
