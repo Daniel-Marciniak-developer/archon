@@ -1,5 +1,5 @@
 services:
-  # PostgreSQL Database
+  
   postgres:
     image: postgres:15
     container_name: archon-postgres
@@ -21,7 +21,7 @@ services:
       timeout: 5s
       retries: 5
 
-  # Redis Cache
+  
   redis:
     image: redis:7-alpine
     container_name: archon-redis
@@ -36,7 +36,7 @@ services:
       timeout: 5s
       retries: 5
 
-  # Backend API
+  
   backend:
     build:
       context: ./backend
@@ -67,7 +67,7 @@ services:
     restart: unless-stopped
     command: uvicorn main:app --host 0.0.0.0 --port 8000 --reload
 
-  # Celery Worker for background tasks
+  
   celery-worker:
     build:
       context: ./backend
@@ -94,7 +94,7 @@ services:
     restart: unless-stopped
     command: celery -A app.jobs.celery worker --loglevel=info
 
-  # Prometheus Monitoring
+  
   prometheus:
     image: prom/prometheus:v2.45.0
     container_name: archon-prometheus
@@ -113,15 +113,16 @@ services:
     restart: unless-stopped
 
 
-  # Frontend
+  
   frontend:
     build:
       context: ./frontend
       dockerfile: Dockerfile
     container_name: archon-frontend
     environment:
-      - VITE_API_URL=http://backend:8000
-      - VITE_WS_API_URL=ws://backend:8000
+      - NODE_ENV=development
+      - VITE_API_URL=http://localhost:8000
+      - VITE_WS_API_URL=ws://localhost:8000
     ports:
       - "5173:5173"
     volumes:
@@ -135,19 +136,16 @@ services:
     command: npm run dev -- --host 0.0.0.0
 
 volumes:
-  # Database
+  
   postgres_data:
     driver: local
   
-  # Monitoring
   prometheus_data:
     driver: local
-
-  # Analysis reports
+  
   analysis_reports:
     driver: local
-
-  # Model cache for AI/ML models
+  
   model_cache:
     driver: local
 
