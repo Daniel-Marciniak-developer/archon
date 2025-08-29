@@ -178,6 +178,68 @@ const ReportHeader = ({ report }: Props) => {
           );
         })}
       </div>
+
+      {report.structure_analysis?.hotspot_files && report.structure_analysis.hotspot_files.length > 0 && (
+        <div className="mt-8">
+          <h3 className="text-xl font-semibold text-crystal-text-primary mb-4">
+            🔥 Structure Hotspots
+          </h3>
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+            {report.structure_analysis.hotspot_files.slice(0, 6).map((hotspot, index) => (
+              <Card key={index} className="crystal-card hover:scale-105 transition-transform duration-200">
+                <CardContent className="p-4">
+                  <div className="flex items-start justify-between mb-2">
+                    <div className="flex-1">
+                      <div className="text-sm font-medium text-crystal-text-primary truncate" title={hotspot.file_path}>
+                        {hotspot.file_path.split('/').pop()}
+                      </div>
+                      <div className="text-xs text-crystal-text-secondary mt-1">
+                        {hotspot.file_path.split('/').slice(0, -1).join('/')}
+                      </div>
+                    </div>
+                    <span
+                      className={`text-xs font-bold px-2 py-1 rounded-full ${
+                        hotspot.priority === 'CRITICAL'
+                          ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'
+                          : hotspot.priority === 'HIGH'
+                          ? 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400'
+                          : 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400'
+                      }`}
+                    >
+                      {hotspot.priority}
+                    </span>
+                  </div>
+                  <div className="grid grid-cols-2 gap-2 text-xs">
+                    <div>
+                      <span className="text-crystal-text-secondary">Risk Score:</span>
+                      <span className="font-medium ml-1">{(hotspot.risk_score * 100).toFixed(0)}%</span>
+                    </div>
+                    <div>
+                      <span className="text-crystal-text-secondary">Issues:</span>
+                      <span className="font-medium ml-1">{hotspot.issues_count}</span>
+                    </div>
+                    <div>
+                      <span className="text-crystal-text-secondary">Lines:</span>
+                      <span className="font-medium ml-1">{hotspot.sloc}</span>
+                    </div>
+                    <div>
+                      <span className="text-crystal-text-secondary">Complexity:</span>
+                      <span className="font-medium ml-1">{(hotspot.complexity_score * 100).toFixed(0)}%</span>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+          {report.structure_analysis.hotspot_files.length > 6 && (
+            <div className="text-center mt-4">
+              <span className="text-sm text-crystal-text-secondary">
+                +{report.structure_analysis.hotspot_files.length - 6} more hotspots
+              </span>
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 };
