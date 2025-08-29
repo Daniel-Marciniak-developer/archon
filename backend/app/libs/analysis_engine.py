@@ -3,6 +3,7 @@ from typing import List, Dict, Any
 from app.libs.models import IssueBase
 from app.analyzers.quality import RuffAnalyzer
 from app.analyzers.security import BanditAnalyzer
+from app.analyzers.structure.radon_analyzer import RadonAnalyzer
 
 logger = logging.getLogger(__name__)
 
@@ -15,9 +16,8 @@ SEVERITY_PENALTIES = {
 
 CATEGORY_WEIGHTS = {
     "Structure": 0.4,
-    "Quality": 0.3,
-    "Security": 0.2,
-    "Dependencies": 0.1,
+    "Quality": 0.35,
+    "Security": 0.25,
 }
 
 class AnalysisEngine:
@@ -25,6 +25,7 @@ class AnalysisEngine:
         self.analyzers = [
             RuffAnalyzer(),
             BanditAnalyzer(),
+            RadonAnalyzer(),
         ]
         self.logger = logging.getLogger(f"{__name__}.AnalysisEngine")
 
@@ -55,7 +56,6 @@ class AnalysisEngine:
             "structure_score": scores["Structure"],
             "quality_score": scores["Quality"],
             "security_score": scores["Security"],
-            "dependencies_score": scores["Dependencies"],
             "issues": issues_dict
         }
 
@@ -67,7 +67,6 @@ class AnalysisEngine:
             "Structure": 100.0,
             "Quality": 100.0,
             "Security": 100.0,
-            "Dependencies": 100.0,
         }
 
         for issue in issues:
@@ -82,8 +81,7 @@ class AnalysisEngine:
         overall_score = (
             scores["Structure"] * CATEGORY_WEIGHTS["Structure"] +
             scores["Quality"] * CATEGORY_WEIGHTS["Quality"] +
-            scores["Security"] * CATEGORY_WEIGHTS["Security"] +
-            scores["Dependencies"] * CATEGORY_WEIGHTS["Dependencies"]
+            scores["Security"] * CATEGORY_WEIGHTS["Security"]
         )
         scores["overall_score"] = overall_score
         return scores
@@ -161,7 +159,6 @@ class AnalysisEngine:
             "structure_score": 100.0,
             "quality_score": 100.0,
             "security_score": 100.0,
-            "dependencies_score": 100.0,
             "issues": []
         }
 

@@ -102,7 +102,7 @@ async def run_real_analysis(project_id: int, analysis_id: int):
             }
             print(f"✅ Created fallback perfect score report for project {project_id}")
 
-        report_file_path = f"/app/analysis_reports/analysis_report_{project_id}.json"
+        report_file_path = f"analysis_reports/analysis_report_{project_id}.json"
         with open(report_file_path, 'w', encoding='utf-8') as f:
             json.dump(report, f, indent=2, ensure_ascii=False)
 

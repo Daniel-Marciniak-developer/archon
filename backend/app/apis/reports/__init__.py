@@ -88,7 +88,7 @@ async def get_project_name(project_id: int) -> str:
 async def load_real_report_data(project_id: int) -> ProjectReport:
     """Load real analysis data from project-specific analysis report"""
     try:
-        project_report_path = f"/app/analysis_reports/analysis_report_{project_id}.json"
+        project_report_path = f"analysis_reports/analysis_report_{project_id}.json"
 
         if os.path.exists(project_report_path):
             report_file_path = project_report_path

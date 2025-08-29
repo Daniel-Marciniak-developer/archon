@@ -75,10 +75,19 @@ class BanditAnalyzer(BaseAnalyzer):
         if not output.strip():
             return []
 
+        # Extract JSON from output (ignore log lines that might be mixed in)
+        json_start = output.find('{')
+        if json_start == -1:
+            self.logger.error("No JSON found in Bandit output")
+            return []
+        
+        json_output = output[json_start:]
+        
         try:
-            bandit_data = json.loads(output)
-        except json.JSONDecodeError:
-            self.logger.error("Invalid JSON output from Bandit")
+            bandit_data = json.loads(json_output)
+        except json.JSONDecodeError as e:
+            self.logger.error(f"Invalid JSON output from Bandit: {e}")
+            self.logger.debug(f"Output was: {json_output[:200]}...")
             return []
 
         metrics = bandit_data.get("metrics", {})
@@ -230,7 +239,7 @@ class BanditAnalyzer(BaseAnalyzer):
             "bandit",
             "-r", ".",
             "-f", "json",
-            "-v",
+            "-q",  # Quiet mode instead of verbose
         ]
 
         if severity_level != "all":

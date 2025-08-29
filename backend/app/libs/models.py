@@ -57,6 +57,7 @@ class Project(ProjectBase):
 class ToolName(str, Enum):
     RUFF = "ruff"
     BANDIT = "bandit"
+    RADON = "radon"
     CUSTOM = "custom"
 class AnalysisBase(BaseModel):
     status: AnalysisStatus = AnalysisStatus.PENDING
@@ -64,7 +65,6 @@ class AnalysisBase(BaseModel):
     structure_score: Optional[float] = Field(None, ge=0, le=100)
     quality_score: Optional[float] = Field(None, ge=0, le=100)
     security_score: Optional[float] = Field(None, ge=0, le=100)
-    dependencies_score: Optional[float] = Field(None, ge=0, le=100)
 class AnalysisCreate(BaseModel):
     project_id: int
     status: AnalysisStatus = AnalysisStatus.PENDING
