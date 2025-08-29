@@ -11,6 +11,7 @@ import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
+import useGlobalLoading from '@/hooks/useGlobalLoading';
 import {
   Eye,
   GitBranch,
@@ -49,8 +50,13 @@ interface Props {
   onProjectDeleted?: () => void;
 }
 
-const getScoreColor = (score: number | null | undefined) => {
-  if (score === null || score === undefined) return "#848488";
+const getScoreColor = (score: number | null | undefined, projectSource?: string, hasAnalysis?: boolean) => {
+  if (score === null || score === undefined) {
+    if (projectSource === 'github' && !hasAnalysis) {
+      return "#52C41A";
+    }
+    return "#848488";
+  }
   if (score >= 80) return "#52C41A";
   if (score >= 40) return "#FFA940";
   return "#FF4D4F";
@@ -59,13 +65,14 @@ const getScoreColor = (score: number | null | undefined) => {
 export function ProjectCard({ project, onProjectDeleted }: Props) {
   const navigate = useNavigate();
   const user = useUser();
+  const { showAnalysisLoading, hideLoading } = useGlobalLoading();
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
 
   const score = project.latest_analysis?.overall_score;
-  const color = getScoreColor(score);
   const hasAnalysis = project.latest_analysis && project.latest_analysis.status === 'completed';
+  const color = getScoreColor(score, project.project_source, hasAnalysis);
   const isAnalysisRunning = project.latest_analysis && (project.latest_analysis.status === 'pending' || project.latest_analysis.status === 'running');
 
   const chartData = [{ name: 'score', value: score ?? 0, fill: color }];
@@ -207,13 +214,25 @@ export function ProjectCard({ project, onProjectDeleted }: Props) {
               <Loader2 className="w-8 h-8 animate-spin text-crystal-electric" />
             ) : (
               <span className="text-2xl font-bold" style={{ color }}>
-                {score !== null && score !== undefined ? `${Math.round(score)}%` : 'N/A'}
+                {score !== null && score !== undefined 
+                  ? `${Math.round(score)}%` 
+                  : project.project_source === 'github' && !hasAnalysis
+                    ? '✓'
+                    : 'N/A'
+                }
               </span>
             )}
           </div>
         </div>
         <p className="mt-2 text-sm font-medium" style={{ color }}>
-          {isAnalysisRunning || isAnalyzing ? 'Analyzing...' : 'Overall Health Score'}
+          {isAnalysisRunning || isAnalyzing 
+            ? 'Analyzing...' 
+            : hasAnalysis 
+              ? 'Overall Health Score'
+              : project.project_source === 'github' 
+                ? 'Ready to analyze'
+                : 'No analysis available'
+          }
         </p>
       </CardContent>
         <div className="p-6 pt-0 space-y-2">
@@ -258,9 +277,12 @@ export function ProjectCard({ project, onProjectDeleted }: Props) {
                   e.stopPropagation();
                   try {
                     setIsAnalyzing(true);
+                    showAnalysisLoading();
                     await brain.start_analysis({ projectId: project.id });
+                    
                     navigate(`/projects/${project.id}/report`);
                   } catch (error) {
+                    hideLoading();
                     toast.error('Failed to start analysis');
                     setIsAnalyzing(false);
                   }
