@@ -1,7 +1,8 @@
 import logging
 from typing import List, Dict, Any
 from app.libs.models import IssueBase
-from app.libs.analyzers import RuffAnalyzer, BanditAnalyzer
+from app.analyzers.quality import RuffAnalyzer
+from app.analyzers.security import BanditAnalyzer
 
 logger = logging.getLogger(__name__)
 
