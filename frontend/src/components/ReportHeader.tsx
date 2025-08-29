@@ -16,6 +16,15 @@ const ReportHeader = ({ report }: Props) => {
     return "#ef4444";
   };
 
+  const getCategoryColor = (categoryName: string) => {
+    switch(categoryName) {
+      case 'Structure': return '#a855f7';
+      case 'Quality': return '#10b981';
+      case 'Security': return '#ef4444';
+      default: return '#a855f7';
+    }
+  };
+
   const getScoreStatus = (score: number) => {
     if (score >= 80) return "Excellent";
     if (score >= 60) return "Good";
@@ -63,13 +72,13 @@ const ReportHeader = ({ report }: Props) => {
 
   return (
     <div className="space-y-6">
-      <div className="relative bg-gradient-to-br from-white/10 via-white/5 to-transparent rounded-2xl border border-white/20 backdrop-blur-xl p-6 shadow-2xl">
+      <div className="bg-crystal-void/50 border border-crystal-electric/20 rounded-2xl p-6">
         <div className="flex items-center justify-between">
           <div className="flex-1">
-            <h1 className="text-3xl font-bold text-crystal-text-primary mb-2">
+            <h1 className="text-3xl font-bold text-crystal-text mb-2">
               {report.project_name}
             </h1>
-            <p className="text-crystal-text-secondary">
+            <p className="text-crystal-text/70">
               Analysis completed • {totalIssues} issues found
             </p>
           </div>
@@ -84,17 +93,17 @@ const ReportHeader = ({ report }: Props) => {
               />
               
               <div 
-                className="relative w-36 h-36 rounded-full flex items-center justify-center shadow-2xl border-4"
+                className="relative w-36 h-36 rounded-full flex items-center justify-center border-4"
                 style={{ 
-                  background: `conic-gradient(${getScoreColor(report.overall_score)} ${report.overall_score * 3.6}deg, #1f2937 0deg)`,
+                  background: `conic-gradient(${getScoreColor(report.overall_score)} ${report.overall_score * 3.6}deg, hsl(var(--crystal-void)) 0deg)`,
                   borderColor: getScoreColor(report.overall_score)
                 }}
               >
-                <div className="w-28 h-28 bg-gray-900 rounded-full flex flex-col items-center justify-center shadow-inner">
-                  <span className="text-5xl font-black text-white leading-none">
+                <div className="w-28 h-28 bg-crystal-void rounded-full flex flex-col items-center justify-center">
+                  <span className="text-5xl font-black text-crystal-text leading-none">
                     {Math.round(report.overall_score)}
                   </span>
-                  <span className="text-xs text-gray-300 font-semibold mt-1">
+                  <span className="text-xs text-crystal-text/70 font-semibold mt-1">
                     OVERALL
                   </span>
                 </div>
@@ -102,11 +111,11 @@ const ReportHeader = ({ report }: Props) => {
             </div>
             
             <div className="mt-4">
-              <div className="text-xl font-bold text-crystal-text-primary mb-2">
+              <div className="text-xl font-bold text-crystal-text mb-2">
                 Overall Score
               </div>
               <div 
-                className="inline-block text-sm font-bold px-6 py-2 rounded-full border-2 shadow-lg"
+                className="inline-block text-sm font-bold px-6 py-2 rounded-full border-2"
                 style={{ 
                   color: getScoreColor(report.overall_score),
                   backgroundColor: `${getScoreColor(report.overall_score)}15`,
@@ -126,19 +135,19 @@ const ReportHeader = ({ report }: Props) => {
           return (
             <Card 
               key={category.name} 
-              className="bg-gradient-to-br from-white/10 via-white/5 to-transparent border border-white/20 backdrop-blur-xl hover:border-white/40 transition-all duration-300 group shadow-xl"
+              className="bg-crystal-void/50 border border-crystal-electric/20 hover:border-crystal-electric/40 transition-all duration-300 group"
             >
               <CardContent className="p-6">
                 <div className="flex items-start justify-between mb-4">
                   <div className="flex items-center space-x-3">
-                    <div className={`p-3 rounded-xl bg-gradient-to-br ${category.gradient} shadow-lg border border-white/20`}>
+                    <div className={`p-3 rounded-xl bg-gradient-to-br ${category.gradient} border border-crystal-electric/20`}>
                       <IconComponent className="w-5 h-5 text-white" />
                     </div>
                     <div>
-                      <h3 className="font-bold text-lg text-crystal-text-primary">
+                      <h3 className="font-bold text-lg text-crystal-text">
                         {category.name}
                       </h3>
-                      <p className="text-sm text-crystal-text-secondary">
+                      <p className="text-sm text-crystal-text/70">
                         {category.description}
                       </p>
                     </div>
@@ -147,22 +156,23 @@ const ReportHeader = ({ report }: Props) => {
                 
                 <div className="space-y-4">
                   <div className="flex items-end justify-between">
-                    <span className="text-4xl font-black text-crystal-text-primary">
+                    <span className="text-4xl font-black text-crystal-text">
                       {category.score.toFixed(0)}%
                     </span>
-                    <span className="text-sm text-crystal-text-secondary font-medium">
+                    <span className="text-sm text-crystal-text/70 font-medium">
                       {category.issues} issues
                     </span>
                   </div>
                   
                   <Progress
                     value={category.score}
-                    className="h-3 bg-white/10 rounded-full overflow-hidden"
+                    color={getCategoryColor(category.name)}
+                    className="h-3 bg-crystal-void/30 rounded-full overflow-hidden"
                   />
                   
                   <div className="flex justify-center">
                     <span
-                      className="text-sm font-bold px-4 py-2 rounded-full border shadow-md"
+                      className="text-sm font-bold px-4 py-2 rounded-full border"
                       style={{ 
                         color: getScoreColor(category.score),
                         backgroundColor: `${getScoreColor(category.score)}15`,
@@ -181,29 +191,29 @@ const ReportHeader = ({ report }: Props) => {
 
       {report.structure_analysis?.hotspot_files && report.structure_analysis.hotspot_files.length > 0 && (
         <div className="mt-8">
-          <h3 className="text-xl font-semibold text-crystal-text-primary mb-4">
+          <h3 className="text-xl font-semibold text-crystal-text mb-4">
             🔥 Structure Hotspots
           </h3>
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
             {report.structure_analysis.hotspot_files.slice(0, 6).map((hotspot, index) => (
-              <Card key={index} className="crystal-card hover:scale-105 transition-transform duration-200">
+              <Card key={index} className="bg-crystal-void/50 border-crystal-electric/20 hover:scale-105 transition-transform duration-200">
                 <CardContent className="p-4">
                   <div className="flex items-start justify-between mb-2">
                     <div className="flex-1">
-                      <div className="text-sm font-medium text-crystal-text-primary truncate" title={hotspot.file_path}>
+                      <div className="text-sm font-medium text-crystal-text truncate" title={hotspot.file_path}>
                         {hotspot.file_path.split('/').pop()}
                       </div>
-                      <div className="text-xs text-crystal-text-secondary mt-1">
+                      <div className="text-xs text-crystal-text/70 mt-1">
                         {hotspot.file_path.split('/').slice(0, -1).join('/')}
                       </div>
                     </div>
                     <span
                       className={`text-xs font-bold px-2 py-1 rounded-full ${
                         hotspot.priority === 'CRITICAL'
-                          ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'
+                          ? 'bg-red-500/20 text-red-400 border border-red-500/30'
                           : hotspot.priority === 'HIGH'
-                          ? 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400'
-                          : 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400'
+                          ? 'bg-orange-500/20 text-orange-400 border border-orange-500/30'
+                          : 'bg-yellow-500/20 text-yellow-400 border border-yellow-500/30'
                       }`}
                     >
                       {hotspot.priority}
@@ -211,20 +221,20 @@ const ReportHeader = ({ report }: Props) => {
                   </div>
                   <div className="grid grid-cols-2 gap-2 text-xs">
                     <div>
-                      <span className="text-crystal-text-secondary">Risk Score:</span>
-                      <span className="font-medium ml-1">{(hotspot.risk_score * 100).toFixed(0)}%</span>
+                      <span className="text-crystal-text/70">Risk Score:</span>
+                      <span className="font-medium ml-1 text-crystal-text">{(hotspot.risk_score * 100).toFixed(0)}%</span>
                     </div>
                     <div>
-                      <span className="text-crystal-text-secondary">Issues:</span>
-                      <span className="font-medium ml-1">{hotspot.issues_count}</span>
+                      <span className="text-crystal-text/70">Issues:</span>
+                      <span className="font-medium ml-1 text-crystal-text">{hotspot.issues_count}</span>
                     </div>
                     <div>
-                      <span className="text-crystal-text-secondary">Lines:</span>
-                      <span className="font-medium ml-1">{hotspot.sloc}</span>
+                      <span className="text-crystal-text/70">Lines:</span>
+                      <span className="font-medium ml-1 text-crystal-text">{hotspot.sloc}</span>
                     </div>
                     <div>
-                      <span className="text-crystal-text-secondary">Complexity:</span>
-                      <span className="font-medium ml-1">{(hotspot.complexity_score * 100).toFixed(0)}%</span>
+                      <span className="text-crystal-text/70">Complexity:</span>
+                      <span className="font-medium ml-1 text-crystal-text">{(hotspot.complexity_score * 100).toFixed(0)}%</span>
                     </div>
                   </div>
                 </CardContent>
@@ -233,7 +243,7 @@ const ReportHeader = ({ report }: Props) => {
           </div>
           {report.structure_analysis.hotspot_files.length > 6 && (
             <div className="text-center mt-4">
-              <span className="text-sm text-crystal-text-secondary">
+              <span className="text-sm text-crystal-text/70">
                 +{report.structure_analysis.hotspot_files.length - 6} more hotspots
               </span>
             </div>
