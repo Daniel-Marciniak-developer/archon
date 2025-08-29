@@ -9,6 +9,7 @@ import { ArrowLeft, AlertCircle } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import brain from '@/brain';
 import { auth } from '@/app/auth';
+import useGlobalLoading from '@/hooks/useGlobalLoading';
 
 interface RepositoryData {
   repository: {
@@ -26,6 +27,7 @@ export const RepositoryViewerPage: React.FC = () => {
   const { projectId } = useParams<{ projectId: string }>();
   const navigate = useNavigate();
   const rawUser = useUser();
+  const { showAnalysisLoading, hideLoading } = useGlobalLoading();
 
 
   const user = useMemo(() => rawUser, [rawUser?.id || null]);
@@ -117,12 +119,14 @@ export const RepositoryViewerPage: React.FC = () => {
     if (!projectId || !user) return;
 
     try {
+      showAnalysisLoading();
       await brain.start_analysis({ projectId: parseInt(projectId) });
       navigate(`/projects/${projectId}/report`);
     } catch (err) {
+      hideLoading();
       setError(err instanceof Error ? err.message : 'Analysis start error');
     }
-  }, [projectId, user, navigate]);
+  }, [projectId, user, navigate, showAnalysisLoading, hideLoading]);
 
 
   useEffect(() => {
