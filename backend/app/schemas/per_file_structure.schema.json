@@ -1,0 +1,60 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "per_file_structure.schema.json", 
+  "title": "Per-File Structure Analysis",
+  "description": "Aggregated structure data for a single file",
+  "type": "object",
+  "required": ["file_path", "summary", "structure_issues"],
+  "properties": {
+    "file_path": {
+      "type": "string",
+      "description": "Relative path to the analyzed file"
+    },
+    "summary": {
+      "type": "object",
+      "required": ["sloc", "complexity_score", "maintainability_score"],
+      "properties": {
+        "sloc": {"type": "integer"},
+        "complexity_score": {"type": "number"},
+        "maintainability_score": {"type": "number"},
+        "max_complexity": {"type": "number"},
+        "fan_in": {"type": "integer"},
+        "fan_out": {"type": "integer"},
+        "in_cycle": {"type": "boolean"},
+        "duplicate_hits": {"type": "integer"},
+        "low_cohesion_classes": {"type": "integer"},
+        "long_functions": {"type": "integer"},
+        "naming_violations": {"type": "integer"}
+      }
+    },
+    "structure_issues": {
+      "type": "array",
+      "items": {
+        "$ref": "issue.schema.json"
+      }
+    },
+    "related": {
+      "type": "object",
+      "properties": {
+        "duplicates_with": {
+          "type": "array",
+          "items": {"type": "string"}
+        },
+        "cycle_with": {
+          "type": "array", 
+          "items": {"type": "string"}
+        },
+        "imports_from_disallowed_layers": {
+          "type": "array",
+          "items": {"type": "string"}
+        }
+      }
+    },
+    "hotspot_score": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1,
+      "description": "Combined risk score for prioritization"
+    }
+  }
+}
