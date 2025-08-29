@@ -109,7 +109,65 @@ export interface ProjectReport {
   
   security_score: number;
   
+  structure_analysis?: StructureAnalysis;
+  
   issues: Issue[];
+}
+
+
+export interface StructureAnalysis {
+  
+  structure_score: number;
+  
+  complexity_score: number;
+  
+  maintainability_score: number;
+  
+  duplication_score: number;
+  
+  hotspot_files: HotspotFile[];
+  
+  metrics_summary: MetricsSummary;
+  
+  total_files_analyzed: number;
+}
+
+
+export interface HotspotFile {
+  
+  file_path: string;
+  
+  risk_score: number;
+  
+  priority: string;
+  
+  issues_count: number;
+  
+  complexity_score: number;
+  
+  maintainability_score: number;
+  
+  duplication_score: number;
+  
+  sloc: number;
+}
+
+
+export interface MetricsSummary {
+  
+  total_lines_of_code: number;
+  
+  total_duplicate_tokens: number;
+  
+  avg_complexity: number;
+  
+  avg_maintainability_index: number;
+  
+  files_with_complexity_issues: number;
+  
+  files_with_maintainability_issues: number;
+  
+  files_with_duplicates: number;
 }
 
 
