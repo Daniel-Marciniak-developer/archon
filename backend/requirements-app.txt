@@ -8,5 +8,6 @@ scipy>=1.9.0
 # Code Analysis Tools
 ruff==0.1.15
 bandit==1.7.5
+pbr>=6.0.0
 radon==6.0.1
 pydeps==1.12.17

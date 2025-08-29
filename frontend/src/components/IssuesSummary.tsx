@@ -63,18 +63,19 @@ const IssuesSummary = ({ issues }: Props) => {
 
   return (
     <div className="space-y-6">
-      <Card className="crystal-glass border-crystal-border">
-        <CardHeader>
-          <CardTitle className="text-xl font-semibold text-crystal-text-primary">
+      <Card className="bg-gradient-to-br from-white/10 via-white/5 to-transparent border border-white/20 backdrop-blur-xl shadow-2xl">
+        <CardHeader className="pb-4">
+          <CardTitle className="text-xl font-bold text-crystal-text-primary flex items-center gap-3">
+            <div className="w-3 h-3 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full shadow-lg"></div>
             Issues Summary
           </CardTitle>
         </CardHeader>
-        <CardContent className="space-y-6">
+        <CardContent className="pt-0 space-y-6">
           <div className="text-center">
-            <div className="text-4xl font-bold text-crystal-text-primary mb-2">
+            <div className="text-6xl font-black text-crystal-text-primary mb-2 leading-none">
               {totalIssues.toLocaleString()}
             </div>
-            <div className="text-crystal-text-secondary">
+            <div className="text-lg font-semibold text-crystal-text-secondary">
               Total Issues Found
             </div>
           </div>
@@ -85,17 +86,17 @@ const IssuesSummary = ({ issues }: Props) => {
               return (
                 <div
                   key={stat.severity}
-                  className={`p-4 rounded-lg border ${stat.bgColor} ${stat.borderColor}`}
+                  className="bg-gradient-to-br from-white/10 via-white/5 to-transparent border border-white/20 rounded-xl p-4 hover:border-white/40 transition-all duration-300 shadow-lg"
                 >
-                  <div className="flex items-center space-x-3">
-                    <IconComponent className={`w-5 h-5 ${stat.color}`} />
-                    <div>
-                      <div className={`text-2xl font-bold ${stat.color}`}>
-                        {stat.count}
-                      </div>
-                      <div className="text-sm text-crystal-text-secondary">
-                        {stat.severity}
-                      </div>
+                  <div className="text-center">
+                    <div className={`w-12 h-12 ${stat.bgColor} rounded-full flex items-center justify-center mx-auto mb-3 shadow-lg border border-white/20`}>
+                      <IconComponent className={`w-6 h-6 ${stat.color}`} />
+                    </div>
+                    <div className={`text-3xl font-black ${stat.color} mb-1`}>
+                      {stat.count}
+                    </div>
+                    <div className="text-sm font-medium text-crystal-text-secondary">
+                      {stat.severity}
                     </div>
                   </div>
                 </div>
@@ -103,19 +104,20 @@ const IssuesSummary = ({ issues }: Props) => {
             })}
           </div>
 
-          <div className="border-t border-crystal-border pt-4">
-            <h4 className="text-sm font-medium text-crystal-text-secondary mb-3">
+          <div className="border-t border-white/20 pt-4">
+            <h4 className="text-lg font-semibold text-crystal-text-primary mb-3">
               Issues by Category
             </h4>
-            <div className="flex flex-wrap gap-2">
+            <div className="flex flex-wrap gap-3">
               {categoryStats.map((category) => (
-                <Badge
+                <div
                   key={category.name}
-                  variant="outline"
-                  className="crystal-glass border-crystal-border text-crystal-text-primary"
+                  className="bg-gradient-to-r from-white/10 to-white/5 border border-white/20 rounded-lg px-4 py-2 backdrop-blur-sm shadow-md"
                 >
-                  {category.name}: {category.count}
-                </Badge>
+                  <span className="text-sm font-semibold text-crystal-text-primary">
+                    {category.name}: <span className="font-black">{category.count}</span>
+                  </span>
+                </div>
               ))}
             </div>
           </div>
