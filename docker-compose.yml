@@ -48,11 +48,15 @@ services:
       - DATABASE_URL_DEV=postgresql://${POSTGRES_USER:-archon_user}:${POSTGRES_PASSWORD:-archon_password}@postgres:5432/${POSTGRES_DB:-archon_dev}
       - DATABASE_URL_ADMIN_DEV=postgresql://${POSTGRES_USER:-archon_user}:${POSTGRES_PASSWORD:-archon_password}@postgres:5432/${POSTGRES_DB:-archon_dev}
       - ARCHON_SERVICE_TYPE=development
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/0
+      - PROMETHEUS_MULTIPROC_DIR=/tmp
     ports:
       - "8000:8000"
     volumes:
       - ./backend:/app
       - /app/__pycache__
+      - analysis_reports:/app/analysis_reports
     networks:
       - archon-network
     depends_on:
@@ -62,6 +66,51 @@ services:
         condition: service_healthy
     restart: unless-stopped
     command: uvicorn main:app --host 0.0.0.0 --port 8000 --reload
+
+  # Celery Worker for background tasks
+  celery-worker:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: archon-celery-worker
+    env_file:
+      - ./backend/.env
+    environment:
+      - DATABASE_URL_DEV=postgresql://${POSTGRES_USER:-archon_user}:${POSTGRES_PASSWORD:-archon_password}@postgres:5432/${POSTGRES_DB:-archon_dev}
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/0
+      - ARCHON_SERVICE_TYPE=development
+    volumes:
+      - ./backend:/app
+      - analysis_reports:/app/analysis_reports
+      - model_cache:/app/model_cache
+    networks:
+      - archon-network
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+    command: celery -A app.jobs.celery worker --loglevel=info
+
+  # Prometheus Monitoring
+  prometheus:
+    image: prom/prometheus:v2.45.0
+    container_name: archon-prometheus
+    volumes:
+      - ./prometheus:/etc/prometheus
+      - prometheus_data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/usr/share/prometheus/console_libraries'
+      - '--web.console.templates=/usr/share/prometheus/consoles'
+    ports:
+      - "9090:9090"
+    networks:
+      - archon-network
+    restart: unless-stopped
 
 
   # Frontend
@@ -86,7 +135,20 @@ services:
     command: npm run dev -- --host 0.0.0.0
 
 volumes:
+  # Database
   postgres_data:
+    driver: local
+  
+  # Monitoring
+  prometheus_data:
+    driver: local
+
+  # Analysis reports
+  analysis_reports:
+    driver: local
+
+  # Model cache for AI/ML models
+  model_cache:
     driver: local
 
 networks:

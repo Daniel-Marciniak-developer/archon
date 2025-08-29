@@ -1,7 +1,35 @@
 # Backend .dockerignore
+
+# Python
 __pycache__/
 *.py[cod]
 *$py.class
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+.nox/
+
+# Development
+.git
+.gitignore
+.env
+.env.*
+!.env.example
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Cache
+.cache/
+.ruff_cache/
+.mypy_cache/
+
+# Reports and logs
+analysis_reports/
+logs/
+*.log
 *.so
 .Python
 build/
