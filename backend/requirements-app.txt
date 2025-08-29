@@ -11,3 +11,6 @@ bandit==1.7.5
 pbr>=6.0.0
 radon==6.0.1
 pydeps==1.12.17
+
+# JavaScript dependency for jscpd - install via npm in Dockerfile
+# jscpd (npm package)
