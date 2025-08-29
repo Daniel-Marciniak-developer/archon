@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 from typing import List
 import logging
-from app.libs.models import IssueBase, ToolName
+from app.libs.models import IssueBase, ToolName, IssueCategory, IssueSeverity
 from app.libs.utils.process_utils import run_command
 
 class BaseAnalyzer(ABC):
@@ -88,7 +88,7 @@ class BaseAnalyzer(ABC):
         else:
             self.logger.info(f"{self.name} found no issues in {project_path}")
 
-    def _create_issue(self, category: str, severity: str, title: str, description: str,
+    def _create_issue(self, category: IssueCategory, severity: IssueSeverity, title: str, description: str,
                      file_path: str, line_number: int, start_line: int = None,
                      end_line: int = None, start_column: int = None, end_column: int = None) -> IssueBase:
         """
