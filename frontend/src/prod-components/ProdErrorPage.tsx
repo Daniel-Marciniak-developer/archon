@@ -7,36 +7,25 @@ interface Props {
 
 export const ProdErrorPage = ({ text, canRefresh }: Props) => {
   return (
-    <div
-      style={{
-        display: "flex",
-        flexFlow: "column",
-        gap: "20px",
-        padding: "20px",
-      }}
-    >
-      {text}
+    <div className="min-h-screen bg-crystal-void flex items-center justify-center">
+      <div className="max-w-7xl mx-auto p-8">
+        <div className="text-center space-y-6">
+          <div className="text-2xl font-bold text-crystal-text">
+            {text}
+          </div>
 
-      <div
-        style={{
-          display: "flex",
-          gap: "10px",
-        }}
-      >
-        {canRefresh && (
-          <button
-            style={{
-              color: "blue",
-              width: "fit-content",
-            }}
-            type="button"
-            onClick={() => {
-              window.location.reload();
-            }}
-          >
-            Reload page
-          </button>
-        )}
+          {canRefresh && (
+            <button
+              className="crystal-button-violet px-6 py-3 rounded-lg font-semibold"
+              type="button"
+              onClick={() => {
+                window.location.reload();
+              }}
+            >
+              Reload page
+            </button>
+          )}
+        </div>
       </div>
     </div>
   );
