@@ -2,6 +2,7 @@ import { lazy, type ReactNode, Suspense } from "react";
 import { createBrowserRouter, Outlet } from "react-router-dom";
 import { userRoutes } from "./user-routes";
 import { AppProvider } from "components/AppProvider";
+import LoadingHandler from "./components/LoadingHandler";
 
 export const SuspenseWrapper = ({ children }: { children: ReactNode }) => {
   return <Suspense>{children}</Suspense>;
@@ -17,9 +18,11 @@ export const router = createBrowserRouter(
     {
       element: (
         <AppProvider>
-          <SuspenseWrapper>
-            <Outlet />
-          </SuspenseWrapper>
+          <LoadingHandler>
+            <SuspenseWrapper>
+              <Outlet />
+            </SuspenseWrapper>
+          </LoadingHandler>
         </AppProvider>
       ),
       children: userRoutes
