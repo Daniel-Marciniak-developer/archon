@@ -6,8 +6,8 @@ Archon is a large-scale, production-ready platform for analyzing (and soon: refa
 
 ---
 
-![Screenshot of the repository view](https://i.ibb.co/HLSkk4gZ/obraz-2025-08-30-103704800.png)
-![Screenshot of the repository analysis](https://i.ibb.co/Fk03XhrS/Zrzut-ekranu-2025-08-30-103433.png)
+![Screenshot of the repository view](https://ik.imagekit.io/rzgx4jodq/Zrzut%20ekranu%202025-08-30%20103537.png)
+![Screenshot of the repository analysis](https://ik.imagekit.io/rzgx4jodq/Zrzut%20ekranu%202025-08-30%20103433.png?updatedAt=1756543940888)
 
 ---
 ## 🚀 Quick Start
