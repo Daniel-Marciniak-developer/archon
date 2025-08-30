@@ -2,8 +2,8 @@
 export { RepositoryViewer as default } from './RepositoryViewer';
 export { RepositoryViewer } from './RepositoryViewer';
 export { RepoHeader } from './RepoHeader';
-export { FileTree } from './FileTree';
-export { CodeViewer } from './CodeViewer';
+export { default as FileTree } from './FileTree';
+export { default as CodeViewer } from './CodeViewer';
 
 
 export type {
