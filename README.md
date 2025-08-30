@@ -1,75 +1,68 @@
 # Archon
 
-Archon code analysis and refactoring system based on the recommended solutions.
+**AI-powered code analysis for Python projects.**
 
-## Stack
+Archon is a large-scale, production-ready platform for analyzing (and soon: refactoring) Python codebases. The project is designed for future public deployment and hosting.
 
-- **Frontend**: React + TypeScript with `npm` as package manager
-- **Backend**: Python FastAPI with `pip` as package manager
-- **Database**: PostgreSQL
-- **Cache/Queue**: Redis + Celery
-- **Authentication**: Stack Auth
+---
 
-## Prerequisites
+![Screenshot of the repository view](https://i.ibb.co/HLSkk4gZ/obraz-2025-08-30-103704800.png)
+![Screenshot of the repository analysis](https://i.ibb.co/Fk03XhrS/Zrzut-ekranu-2025-08-30-103433.png)
 
-Before running the project, you need:
+---
+## 🚀 Quick Start
 
-1. **Python 3.12+**
-2. **Node.js 18+** and **npm**
-3. **PostgreSQL 15+**
-4. **Redis** (for background tasks)
-
-## Quick Setup
-
-### 1. Database Setup
+### 1. Clone & Configure
 ```bash
-createdb archon_dev
-psql -d archon_dev -f backend/schema.sql
-```
-
-### 2. Redis Setup
-```bash
-# Option 1: Docker
-docker run -d --name redis -p 6379:6379 redis:latest
-
-# Option 2: WSL2
-sudo service redis-server start
-```
-
-### 3. Environment Variables
-```bash
-# Backend
+git clone https://github.com/Daniel-Marciniak-developer/archon.git
+cd archon
 cp backend/.env.example backend/.env
-
-# Frontend
 cp frontend/.env.example frontend/.env
 ```
 
-### 4. Install Dependencies & Run
+### 2. Run with Docker Compose
 ```bash
-# Use the startup script (Windows)
-startup.bat
-
-# Or manually:
-# Backend
-cd backend && pip install -r requirements.txt
-python -m uvicorn main:app --reload
-
-# Frontend (separate terminal)
-cd frontend && npm install
-npm run dev
+docker compose up --build
 ```
+*⏳ First launch takes about 7 minutes (420 seconds) as all services build and initialize.*
+
+---
+
+## 🌍 Why so big?
+Archon is built for scale and reliability, with the goal of being hosted and released to the world as a professional-grade code analysis and refactoring service.
+
+---
+
+## 🧠 What does Archon do?
+- **Currently:** Analyzes Python projects for code quality, structure, and security (results are not yet full-featured)
+- **Coming soon:** Full project-wide Python refactoring and advanced code improvement tools
+
+---
+
+## 🏗️ Tech Stack
+- **Frontend:** React + TypeScript
+- **Backend:** FastAPI (Python)
+- **Database:** PostgreSQL
+- **Cache/Queue:** Redis + Celery
+
+---
 
 ## URLs
+- Frontend: http://localhost:5173
+- Backend API: http://localhost:8000
+- API Docs: http://localhost:8000/docs
 
-- **Frontend**: http://localhost:5173
-- **Backend API**: http://localhost:8000
-- **API Documentation**: http://localhost:8000/docs
+---
 
-## Background Tasks
+**Note:** Archon is not yet fully finished. The project is large and may look like it has a lot of unnecessary parts, but these are set up for future features and scalability. This is my favorite project—I'm deeply invested in it and will continue to develop and improve it!
 
-For code analysis to work, start Celery worker:
-```bash
-cd backend
-celery -A app.libs.celery_worker worker --loglevel=info
-```
+---
+
+<div align="center">
+  <a href="https://shipwrecked.hackclub.com/?t=ghrm" target="_blank">
+    <img src="https://hc-cdn.hel1.your-objectstorage.com/s/v3/739361f1d440b17fc9e2f74e49fc185d86cbec14_badge.png" 
+         alt="This project is part of Shipwrecked, the world's first hackathon on an island!" 
+         style="width: 35%;">
+  </a>
+</div>
+
