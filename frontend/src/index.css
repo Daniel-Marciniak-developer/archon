@@ -117,6 +117,32 @@
     transform: translateY(-1px);
   }
 
+    .crystal-button-violet {
+    background: hsl(var(--crystal-electric));
+    color: white;
+    border: 1px solid hsl(var(--crystal-electric) / 0.3);
+    transition: all 0.3s ease;
+  }
+
+  .crystal-button-violet:hover {
+    background: hsl(var(--crystal-electric) / 0.8);
+    border-color: hsl(var(--crystal-electric) / 0.5);
+  }
+
+  /* Loading animation */
+  @keyframes loading {
+    0% {
+      transform: translateX(-100%);
+    }
+    50% {
+      transform: translateX(0%);
+    }
+    100% {
+      transform: translateX(100%);
+    }
+  }
+}
+
   .crystal-btn-secondary {
     background: hsl(var(--crystal-surface));
     color: hsl(var(--crystal-text-primary));
@@ -422,7 +448,3 @@
       animation: none;
     }
   }
-}
-
-
-
